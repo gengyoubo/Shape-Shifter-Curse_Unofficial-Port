@@ -4,10 +4,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.ItemStack;
@@ -30,12 +35,11 @@ public class AlterShapelessRecipe extends AlterRecipe {
 
     public final @Nullable ResourceLocation requireAdvancement;
 
-    public AlterShapelessRecipe(ResourceLocation id, ItemStack output, NonNullList<Ingredient> input, Ingredient catalyst, int recipeTime, int fuelCostPerTick, ResourceLocation requireAdvancement) {
-        this.id = id;
+    public AlterShapelessRecipe(ItemStack output, NonNullList<Ingredient> input, @Nullable Ingredient catalyst, int recipeTime, int fuelCostPerTick, @Nullable ResourceLocation requireAdvancement) {
         this.output = output;
         this.input = input;
-        this.catalyst = catalyst;
         this.recipeTime = recipeTime;
+        this.catalyst = catalyst;
         this.fuelCostPerTick = fuelCostPerTick;
         this.requireAdvancement = requireAdvancement;
     }
@@ -45,10 +49,25 @@ public class AlterShapelessRecipe extends AlterRecipe {
         return recipeTime;
     }
 
-    // 进度锁
+    // 进度锁：require_advancement 未完成则不可合成
     @Override
-    public boolean canCraft(PlayerEntity player) {
-        return true;
+    public boolean canCraft(@Nullable Player player) {
+        if (requireAdvancement == null) {
+            return true;
+        }
+        if (player instanceof ServerPlayer playerEntity) {
+            MinecraftServer server = playerEntity.getServer();
+            if (server == null) {
+                return false;
+            }
+            AdvancementHolder advancement = server.getAdvancements().get(requireAdvancement);
+            if (advancement == null) {
+                return false;
+            }
+            AdvancementProgress advancementProgress = playerEntity.getAdvancements().getOrStartProgress(advancement);
+            return advancementProgress.isDone();
+        }
+        return false;
     }
 
     @Override
@@ -100,40 +119,45 @@ public class AlterShapelessRecipe extends AlterRecipe {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public @NotNull RecipeSerializer<?> getSerializer() {
         return RecipeSerializerRegister.ALTER_SHAPELESS_RECIPE;
     }
 
     public static class Serializer implements RecipeSerializer<AlterShapelessRecipe> {
-        public AlterShapelessRecipe read(ResourceLocation identifier, JsonObject jsonObject) {
-            int time = JsonHelper.getInt(jsonObject, "time", 200);
-            NonNullList<Ingredient> defaultedList = getIngredients(JsonHelper.getArray(jsonObject, "ingredients"));
-            Ingredient catalyst = null;
-            if (jsonObject.has("catalyst")) {
-                catalyst = Ingredient.fromJson(jsonObject.get("catalyst"), true);
-            }
-            int fuelCost = JsonHelper.getInt(jsonObject, "fuel_cost", 1);
-            if (defaultedList.isEmpty()) {
-                throw new JsonParseException("No ingredients for alter shapeless recipe");
-            } else if (defaultedList.size() > 9) {
-                throw new JsonParseException("Too many ingredients for alter shapeless recipe");
-            } else {
-                ItemStack itemStack = ShapedRecipe.outputFromJson(JsonHelper.getObject(jsonObject, "result"));
-                return new AlterShapelessRecipe(identifier, itemStack, defaultedList, catalyst, time, fuelCost);
-            }
-        }
+        private static final MapCodec<AlterShapelessRecipe> CODEC = RecordCodecBuilder.mapCodec(
+            instance -> instance.group(
+                ItemStack.STRICT_CODEC.fieldOf("result").forGetter(r -> r.output),
+                Ingredient.CODEC_NONEMPTY.listOf().fieldOf("ingredients").flatXmap(
+                    list -> {
+                        Ingredient[] arr = list.stream().filter(i -> !i.isEmpty()).toArray(Ingredient[]::new);
+                        if (arr.length == 0) {
+                            return DataResult.error(() -> "No ingredients for alter shapeless recipe");
+                        }
+                        if (arr.length > 9) {
+                            return DataResult.error(() -> "Too many ingredients for alter shapeless recipe");
+                        }
+                        return DataResult.success(NonNullList.of(Ingredient.EMPTY, arr));
+                    }, DataResult::success)
+                    .forGetter(r -> r.input),
+                Ingredient.CODEC_NONEMPTY.optionalFieldOf("catalyst").forGetter(r -> Optional.ofNullable(r.catalyst)),
+                Codec.INT.optionalFieldOf("time", 200).forGetter(r -> r.recipeTime),
+                Codec.INT.optionalFieldOf("fuel_cost", 1).forGetter(r -> r.fuelCostPerTick),
+                ResourceLocation.CODEC.optionalFieldOf("require_advancement").forGetter(r -> Optional.ofNullable(r.requireAdvancement))
+            ).apply(instance, (output, input, catalyst, time, fuelCost, requireAdvancement) ->
+                new AlterShapelessRecipe(output, input, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
+        );
 
         private static final StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> STREAM_CODEC = StreamCodec.of(
             Serializer::toNetwork, Serializer::fromNetwork
         );
 
         @Override
-        public MapCodec<AlterShapelessRecipe> codec() {
+        public @NotNull MapCodec<AlterShapelessRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> streamCodec() {
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> streamCodec() {
             return STREAM_CODEC;
         }
 
@@ -142,62 +166,17 @@ public class AlterShapelessRecipe extends AlterRecipe {
             if (buf.readBoolean()) {
                 catalyst = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
             }
-            int i = packetByteBuf.readVarInt();
-            NonNullList<Ingredient> defaultedList = NonNullList.ofSize(i, Ingredient.EMPTY);
-    public boolean canCraft(PlayerEntity player) {
-        if (requireAdvancement == null) {
-            return true;
-        }
-        if (player instanceof ServerPlayerEntity playerEntity) {
-            MinecraftServer server = playerEntity.getServer();
-            if (server == null) {
-                return false;
+            ResourceLocation requireAdvancement = null;
+            if (buf.readBoolean()) {
+                requireAdvancement = ResourceLocation.STREAM_CODEC.decode(buf);
             }
-            Advancement advancement = server.getAdvancementLoader().get(requireAdvancement);
-            if (advancement == null) {
-                return false;
-            }
-            AdvancementProgress advancementProgress = playerEntity.getAdvancementTracker().getProgress(advancement);
-            if (advancementProgress == null) {
-                return false;
-            }
-            return advancementProgress.isDone();
-        }
-        return false;
-        public AlterShapelessRecipe read(Identifier identifier, JsonObject jsonObject) {
-            int time = JsonHelper.getInt(jsonObject, "time", 200);
-            NonNullList<Ingredient> defaultedList = getIngredients(JsonHelper.getArray(jsonObject, "ingredients"));
-            Ingredient catalyst = null;
-            if (jsonObject.has("catalyst")) {
-                catalyst = Ingredient.fromJson(jsonObject.get("catalyst"), true);
-            }
-            Identifier requireAdvancement = null;
-            if (jsonObject.has("require_advancement")) {
-                requireAdvancement = new Identifier(JsonHelper.getString(jsonObject, "require_advancement"));
-            }
-            int fuelCost = JsonHelper.getInt(jsonObject, "fuel_cost", 1);
-            if (defaultedList.isEmpty()) {
-                throw new JsonParseException("No ingredients for alter shapeless recipe");
-            } else if (defaultedList.size() > 9) {
-                throw new JsonParseException("Too many ingredients for alter shapeless recipe");
-            } else {
-                ItemStack itemStack = ShapedRecipe.outputFromJson(JsonHelper.getObject(jsonObject, "result"));
-                return new AlterShapelessRecipe(identifier, itemStack, defaultedList, catalyst, time, fuelCost, requireAdvancement);
-            }
-        }
-            Identifier requireAdvancement = null;
-            if (packetByteBuf.readBoolean()) {
-                requireAdvancement = packetByteBuf.readIdentifier();
-            }
-            int i = packetByteBuf.readVarInt();
-            NonNullList<Ingredient> defaultedList = NonNullList.ofSize(i, Ingredient.EMPTY);
-            for(int j = 0; j < defaultedList.size(); ++j) {
-                defaultedList.set(j, Ingredient.fromPacket(packetByteBuf));
-            }
-            ItemStack itemStack = packetByteBuf.readItemStack();
-            int time = packetByteBuf.readVarInt();
-            int fuelCost = packetByteBuf.readVarInt();
-            return new AlterShapelessRecipe(identifier, itemStack, defaultedList, catalyst, time, fuelCost, requireAdvancement);
+            int n = buf.readVarInt();
+            NonNullList<Ingredient> list = NonNullList.withSize(n, Ingredient.EMPTY);
+            list.replaceAll(i -> Ingredient.CONTENTS_STREAM_CODEC.decode(buf));
+            ItemStack output = ItemStack.STREAM_CODEC.decode(buf);
+            int time = buf.readVarInt();
+            int fuelCost = buf.readVarInt();
+            return new AlterShapelessRecipe(output, list, catalyst, time, fuelCost, requireAdvancement);
         }
 
         private static void toNetwork(RegistryFriendlyByteBuf buf, AlterShapelessRecipe r) {
@@ -205,13 +184,13 @@ public class AlterShapelessRecipe extends AlterRecipe {
                 buf.writeBoolean(true);
                 Ingredient.CONTENTS_STREAM_CODEC.encode(buf, r.catalyst);
             } else {
-                packetByteBuf.writeBoolean(false);
+                buf.writeBoolean(false);
             }
-            if (shapelessRecipe.requireAdvancement != null) {
-                packetByteBuf.writeBoolean(true);
-                packetByteBuf.writeIdentifier(shapelessRecipe.requireAdvancement);
+            if (r.requireAdvancement != null) {
+                buf.writeBoolean(true);
+                ResourceLocation.STREAM_CODEC.encode(buf, r.requireAdvancement);
             } else {
-                packetByteBuf.writeBoolean(false);
+                buf.writeBoolean(false);
             }
             buf.writeVarInt(r.input.size());
             for (Ingredient ingredient : r.input) {

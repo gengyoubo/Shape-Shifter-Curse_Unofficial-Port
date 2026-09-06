@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -25,12 +26,18 @@ public class AlterShapedRecipe extends AlterRecipe {
     public final int recipeTime;
     public final int fuelCostPerTick;
 
-    public AlterShapedRecipe(ShapedRecipePattern pattern, ItemStack output, @Nullable Ingredient catalyst, int recipeTime, int fuelCostPerTick) {
-        this.pattern = pattern;
+    public final @Nullable ResourceLocation requireAdvancement;
+
+    public AlterShapedRecipe(ResourceLocation id, int width, int height, NonNullList<Ingredient> input, Ingredient catalyst, ItemStack output, int recipeTime, int fuelCostPerTick, ResourceLocation requireAdvancement) {
+        this.id = id;
+        this.width = width;
+        this.height = height;
+        this.input = input;
         this.output = output;
         this.catalyst = catalyst;
         this.recipeTime = recipeTime;
         this.fuelCostPerTick = fuelCostPerTick;
+        this.requireAdvancement = requireAdvancement;
     }
 
     @Override
@@ -38,10 +45,27 @@ public class AlterShapedRecipe extends AlterRecipe {
         return recipeTime;
     }
 
-    // 进度锁
     @Override
     public boolean canCraft(@Nullable Player player) {
-        return true;
+        if (requireAdvancement == null) {
+            return true;
+        }
+        if (player instanceof ServerPlayer playerEntity) {
+            MinecraftServer server = playerEntity.getServer();
+            if (server == null) {
+                return false;
+            }
+            Advancement advancement = server.getAdvancementLoader().get(requireAdvancement);
+            if (advancement == null) {
+                return false;
+            }
+            AdvancementProgress advancementProgress = playerEntity.getAdvancementTracker().getProgress(advancement);
+            if (advancementProgress == null) {
+                return false;
+            }
+            return advancementProgress.isDone();
+        }
+        return false;
     }
 
     private boolean matchesPattern(RecipeInput inv, int offsetX, int offsetY, boolean flipped) {
@@ -139,14 +163,42 @@ public class AlterShapedRecipe extends AlterRecipe {
 
         private static AlterShapedRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
             Ingredient catalyst = null;
-            if (buf.readBoolean()) {
-                catalyst = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
+            if (jsonObject.has("catalyst")) {
+                catalyst = Ingredient.fromJson(jsonObject.get("catalyst"), true);
             }
-            ShapedRecipePattern pattern = ShapedRecipePattern.STREAM_CODEC.decode(buf);
-            ItemStack output = ItemStack.STREAM_CODEC.decode(buf);
-            int time = buf.readVarInt();
-            int fuelCost = buf.readVarInt();
-            return new AlterShapedRecipe(pattern, output, catalyst, time, fuelCost);
+            Identifier requireAdvancement = null;
+            if (jsonObject.has("require_advancement")) {
+                requireAdvancement = new Identifier(JsonHelper.getString(jsonObject, "require_advancement"));
+            }
+            int fuelCost = JsonHelper.getInt(jsonObject, "fuel_cost", 1);
+            Map<String, Ingredient> map = readSymbols(JsonHelper.getObject(jsonObject, "key"));
+            String[] strings = removePadding(getPattern(JsonHelper.getArray(jsonObject, "pattern")));
+            int i = strings[0].length();
+            int j = strings.length;
+            NonNullList<Ingredient> defaultedList = createPatternMatrix(strings, map, i, j);
+            ItemStack itemStack = ShapedRecipe.outputFromJson(JsonHelper.getObject(jsonObject, "result"));
+            return new AlterShapedRecipe(identifier, i, j, defaultedList, catalyst, itemStack, time, fuelCost, requireAdvancement);
+        }
+
+        public AlterShapedRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
+            Ingredient catalyst = null;
+            if (packetByteBuf.readBoolean()) {
+                catalyst = Ingredient.fromPacket(packetByteBuf);
+            }
+            Identifier requireAdvancement = null;
+            if (packetByteBuf.readBoolean()) {
+                requireAdvancement = packetByteBuf.readIdentifier();
+            }
+            int i = packetByteBuf.readVarInt();
+            int j = packetByteBuf.readVarInt();
+            NonNullList<Ingredient> defaultedList = NonNullList.ofSize(i * j, Ingredient.EMPTY);
+            for(int k = 0; k < defaultedList.size(); ++k) {
+                defaultedList.set(k, Ingredient.fromPacket(packetByteBuf));
+            }
+            ItemStack itemStack = packetByteBuf.readItemStack();
+            int time = packetByteBuf.readVarInt();
+            int fuelCost = packetByteBuf.readVarInt();
+            return new AlterShapedRecipe(identifier, i, j, defaultedList, catalyst, itemStack, time, fuelCost, requireAdvancement);
         }
 
         private static void toNetwork(RegistryFriendlyByteBuf buf, AlterShapedRecipe r) {
@@ -154,7 +206,13 @@ public class AlterShapedRecipe extends AlterRecipe {
                 buf.writeBoolean(true);
                 Ingredient.CONTENTS_STREAM_CODEC.encode(buf, r.catalyst);
             } else {
-                buf.writeBoolean(false);
+                packetByteBuf.writeBoolean(false);
+            }
+            if (alterRecipe.requireAdvancement != null) {
+                packetByteBuf.writeBoolean(true);
+                packetByteBuf.writeIdentifier(alterRecipe.requireAdvancement);
+            } else {
+                packetByteBuf.writeBoolean(false);
             }
             ShapedRecipePattern.STREAM_CODEC.encode(buf, r.pattern);
             ItemStack.STREAM_CODEC.encode(buf, r.output);

@@ -26,7 +26,7 @@ public class DetailScreen extends Screen implements WidgetEXUtils.IWidgetEX {
         int TextSizeX = width - TextX * 2;
         int TextSizeY = height - 60;
         int TextDefaultColor = 0xFFFFFF;
-        ScaleScrollTextWidget DetailTextWidget = (ScaleScrollTextWidget) new ScaleScrollTextWidget(TextX, TextY, TextSizeX, TextSizeY / 9, 1.0f, DetailText, font).setColor(TextDefaultColor);
+        ScaleScrollTextWidget DetailTextWidget = (ScaleScrollTextWidget) new ScaleScrollTextWidget(TextX, TextY, TextSizeX, TextSizeY, 1.0f, DetailText, font).setColor(TextDefaultColor);
         DetailTextWidget.setEnableScrollableIconRender(true);
         this.addWidget((WidgetEXUtils.IWidgetEX) DetailTextWidget);
         this.addRenderableWidget(DetailTextWidget);

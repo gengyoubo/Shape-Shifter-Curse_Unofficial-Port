@@ -47,12 +47,16 @@ public class AlterCraftUI extends AbstractContainerScreen<AlterCraftUIHandler> {
         AlterCraftUIHandler uiHandler = this.getMenu();
         int maxProgress = uiHandler.getMaxProgress();
         if (maxProgress > 0) {
+            // clamp 到 [0,24]：防止 ratio>1 时 ProcessWidth>24，blit 采样 u1=(176+w)/200>1.0 越过纹理右缘 wrap（视觉"反转到左侧"）
             int ProcessWidth = (int) (24 * ((float) uiHandler.getNowProgress() / (float) maxProgress));
+            ProcessWidth = Math.clamp(ProcessWidth, 0, 24);
             context.blit(BACKGROUND, baseX+89, baseY+35, 176, 0, ProcessWidth, 17, TEXTURE_WIDTH, TEXTURE_HEIGHT);
         }
         int maxFuel = AlterBlockEntity.maxFuel;
         if (maxFuel > 0) {
+            // clamp 到 [0,54]：防止 FuelWidth 越界(负值/超值)导致 fill 左端脱离 baseX+90(视觉"反转到增长起始点左侧")
             int FuelWidth = (int) (54 * ((float) uiHandler.getNowFuel() / (float) maxFuel));
+            FuelWidth = Math.clamp(FuelWidth, 0, 54);
             context.fill(baseX + 90, baseY + 60, baseX + 90 + FuelWidth, baseY + 60 + 10, 0xFFFF00FF);
         }
     }

@@ -39,6 +39,10 @@ public class AlterBlockEntity extends BaseContainerBlockEntity implements Worldl
     public AlterRecipe nowRecipe;
     public RecipeHolder<?> nowRecipeHolder;
     public static final int maxFuel = 102400;
+    // data slot 网络用 16-bit(short) 传输，值域 [-32768,32767]；而 fuelTime 可累积到 102400 超上限，
+    // 超过 32767 会被 writeShort 截断成负值 → 客户端燃料条"消失-重涨"。
+    // 按原作者建议：用 2 个 short 无损拆分传输 fuelTime —— slot 2=低16位, slot 3=高16位，
+    // 客户端 getNowFuel() 拼回完整 int。getCount()/size() 相应从 3 增到 4。
     public int progress = 0;
     public int totalProgress = 0;  // Only Client
     public int fuelTime = 0;
@@ -82,7 +86,10 @@ public class AlterBlockEntity extends BaseContainerBlockEntity implements Worldl
                         return AlterBlockEntity.this.totalProgress;
                     }
                     case 2 -> {
-                        return AlterBlockEntity.this.fuelTime;
+                        return AlterBlockEntity.this.fuelTime & 0xFFFF;
+                    }
+                    case 3 -> {
+                        return (AlterBlockEntity.this.fuelTime >>> 16) & 0xFFFF;
                     }
                     default -> {
                         return 0;
@@ -94,13 +101,14 @@ public class AlterBlockEntity extends BaseContainerBlockEntity implements Worldl
                 switch (index) {
                     case 0 -> AlterBlockEntity.this.progress = value;
                     case 1 -> AlterBlockEntity.this.totalProgress = value;
-                    case 2 -> AlterBlockEntity.this.fuelTime = value;
+                    case 2 -> AlterBlockEntity.this.fuelTime = (AlterBlockEntity.this.fuelTime & 0xFFFF0000) | (value & 0xFFFF);
+                    case 3 -> AlterBlockEntity.this.fuelTime = (AlterBlockEntity.this.fuelTime & 0x0000FFFF) | ((value & 0xFFFF) << 16);
                 }
 
             }
 
             public int size() {
-                return 3;
+                return 4;
             }
 
             public int getCount() {

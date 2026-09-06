@@ -25,7 +25,7 @@ public class AlterCraftUIHandler extends RecipeBookMenu<RecipeInput, AlterRecipe
     public final ContainerData propertyDelegate;
 
     public static AlterCraftUIHandler createMenu(int i, Inventory inventory) {
-        return new AlterCraftUIHandler(RegMenuType.AlterCraftUI, i, inventory, new SimpleContainer(11), ContainerLevelAccess.NULL, new SimpleContainerData(3));
+        return new AlterCraftUIHandler(RegMenuType.AlterCraftUI, i, inventory, new SimpleContainer(11), ContainerLevelAccess.NULL, new SimpleContainerData(4));
     }
 
     public AlterCraftUIHandler(MenuType<?> screenHandlerType, int syncId, Inventory playerInventory, Container alterBlockEntity, ContainerLevelAccess context, ContainerData propertyDelegate) {
@@ -166,7 +166,9 @@ public class AlterCraftUIHandler extends RecipeBookMenu<RecipeInput, AlterRecipe
     }
 
     public int getNowFuel() {
-        return this.propertyDelegate.get(2);
+        // data slot 以 16-bit(short) 传输，原先只传 slot2=fuelTime 会被 writeShort 截断成负值。
+        // 现在 slot2=低16位、slot3=高16位，这里拼回完整 fuelTime（无损）。
+        return (this.propertyDelegate.get(2) & 0xFFFF) | ((this.propertyDelegate.get(3) & 0xFFFF) << 16);
     }
 
     @Override

@@ -1,9 +1,9 @@
 package net.onixary.shapeShifterCurseFabric.custom_ui;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.onixary.shapeShifterCurseFabric.custom_ui.ui_part.WidgetEXUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,9 +18,9 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     // Node得建立一个注册表 用来标记Power更改 Icon路径 再上几个API什么的
     // NodeMetaData生成也得要注册表 根据FormData里的数据选对应的初始化函数
 
-    public record NodeMetaData(int tier, int y, @NotNull Identifier nodeID, @Nullable Identifier nodeDependID) {}
+    public record NodeMetaData(int tier, int y, @NotNull ResourceLocation nodeID, @Nullable ResourceLocation nodeDependID) {}
 
-    public final HashMap<Identifier, NodeMetaData> nodeMap = new HashMap<>();
+    public final HashMap<ResourceLocation, NodeMetaData> nodeMap = new HashMap<>();
     public final List<NodeMetaData> nodeMetaDataList = new ArrayList<>();
     public @Nullable NodeMetaData nowSelectNodeMetaData;
     public final int nodeBaseX = 0;
@@ -43,7 +43,7 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         return this.WidgetList;
     }
 
-    protected FormUpdateScreen(Text title) {
+    protected FormUpdateScreen(Component title) {
         super(title);
     }
 
@@ -53,13 +53,13 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     }
 
     // Utils
-    public @Nullable FormUpdateScreen.NodeMetaData getNode(Identifier nodeID) {
+    public @Nullable FormUpdateScreen.NodeMetaData getNode(ResourceLocation nodeID) {
         return nodeMap.get(nodeID);
     }
 
     // UNTESTED
-    public void drawConnectLine(DrawContext context, NodeMetaData nodeMetaData) {
-        Identifier depend = nodeMetaData.nodeDependID;
+    public void drawConnectLine(GuiGraphics context, NodeMetaData nodeMetaData) {
+        ResourceLocation depend = nodeMetaData.nodeDependID;
         if (depend == null) return;
         NodeMetaData dependNodeMetaData = getNode(depend);
         if (dependNodeMetaData == null) return;
@@ -74,7 +74,7 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     }
 
     // UNTESTED
-    public void drawNode(DrawContext context, NodeMetaData nodeMetaData) {
+    public void drawNode(Component context, NodeMetaData nodeMetaData) {
         // TODO 需要完成Node数据注册表
     }
 }

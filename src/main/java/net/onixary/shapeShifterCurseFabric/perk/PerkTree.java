@@ -1,6 +1,6 @@
 package net.onixary.shapeShifterCurseFabric.perk;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -11,12 +11,12 @@ import java.util.Map;
 // Common Side
 public class PerkTree {
     public static class PerkNode {
-        public final Identifier perkID;
+        public final ResourceLocation perkID;
         public final int tier;
         public final int y;
-        public final @Nullable Identifier dependentPerkID;
+        public final @Nullable ResourceLocation dependentPerkID;
 
-        public PerkNode(Identifier perkID, int tier, int y, @Nullable Identifier dependentPerkID) {
+        public PerkNode(ResourceLocation perkID, int tier, int y, @Nullable ResourceLocation dependentPerkID) {
             this.perkID = perkID;
             this.tier = tier;
             this.y = y;
@@ -24,19 +24,19 @@ public class PerkTree {
         }
     }
 
-    public final Identifier treeID;
+    public final ResourceLocation treeID;
     public final List<PerkNode> perkNodes = new ArrayList<>();
-    public final Map<Identifier, PerkNode> perkNodeMap = new HashMap<>();
+    public final Map<ResourceLocation, PerkNode> perkNodeMap = new HashMap<>();
 
-    public PerkTree(Identifier treeID) {
+    public PerkTree(ResourceLocation treeID) {
         this.treeID = treeID;
     }
 
-    public Identifier getID() {
+    public ResourceLocation getID() {
         return treeID;
     }
 
-    public PerkTree addNode(Identifier perkID, int tier, int y, @Nullable Identifier dependentPerkID) {
+    public PerkTree addNode(ResourceLocation perkID, int tier, int y, @Nullable ResourceLocation dependentPerkID) {
         return this.addNode(new PerkNode(perkID, tier, y, dependentPerkID));
     }
 
@@ -46,11 +46,11 @@ public class PerkTree {
         return this;
     }
 
-    public @Nullable PerkNode getNode(Identifier perkID) {
+    public @Nullable PerkNode getNode(ResourceLocation perkID) {
         return perkNodeMap.get(perkID);
     }
 
-    public @Nullable PerkNode getDependentNode(Identifier perkID) {
+    public @Nullable PerkNode getDependentNode(ResourceLocation perkID) {
         PerkNode perkNode = getNode(perkID);
         if (perkNode != null && perkNode.dependentPerkID != null) {
             return getNode(perkNode.dependentPerkID);

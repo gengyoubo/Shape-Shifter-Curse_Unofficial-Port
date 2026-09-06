@@ -1,7 +1,7 @@
 package net.onixary.shapeShifterCurseFabric.perk;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.FormUtils;
 
@@ -9,16 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NormalPerk implements IPerk {
-    public final Identifier perkID;
-    public final List<Identifier> powerAdd = new ArrayList<>();
-    public final List<Identifier> powerRemove = new ArrayList<>();
+    public final ResourceLocation perkID;
+    public final List<ResourceLocation> powerAdd = new ArrayList<>();
+    public final List<ResourceLocation> powerRemove = new ArrayList<>();
 
-    public NormalPerk(Identifier perkID) {
+    public NormalPerk(ResourceLocation perkID) {
         this.perkID = perkID;
     }
 
-    public NormalPerk addPower(Identifier... powerIDs) {
-        for (Identifier powerID : powerIDs) {
+    public NormalPerk addPower(ResourceLocation... powerIDs) {
+        for (ResourceLocation powerID : powerIDs) {
             if (!powerAdd.contains(powerID)) {
                 powerAdd.add(powerID);
             }
@@ -26,8 +26,8 @@ public class NormalPerk implements IPerk {
         return this;
     }
 
-    public NormalPerk removePower(Identifier... powerIDs) {
-        for (Identifier powerID : powerIDs) {
+    public NormalPerk removePower(ResourceLocation... powerIDs) {
+        for (ResourceLocation powerID : powerIDs) {
             if (!powerRemove.contains(powerID)) {
                 powerRemove.add(powerID);
             }
@@ -36,17 +36,17 @@ public class NormalPerk implements IPerk {
     }
 
     @Override
-    public Identifier getID() {
+    public ResourceLocation getID() {
         return this.perkID;
     }
 
     @Override
-    public void onLoad(PlayerEntity player, IForm form) {
-        Identifier powerSource = form.getFormLayer().getRight();
-        for (Identifier powerID : powerAdd) {
+    public void onLoad(Player player, IForm form) {
+        ResourceLocation powerSource = form.getFormLayer().getB();
+        for (ResourceLocation powerID : powerAdd) {
             FormUtils.applyPower(player, powerID, powerSource);
         }
-        for (Identifier powerID : powerRemove) {
+        for (ResourceLocation powerID : powerRemove) {
             FormUtils.removePower(player, powerID, powerSource);
         }
     }

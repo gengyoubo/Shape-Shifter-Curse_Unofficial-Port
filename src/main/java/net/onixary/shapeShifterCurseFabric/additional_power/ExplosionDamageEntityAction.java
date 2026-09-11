@@ -60,10 +60,10 @@ public class ExplosionDamageEntityAction {
         int t = Mth.floor(ExplosionPos.z() - (double)q - 1.0);
         int u = Mth.floor(ExplosionPos.z() + (double)q + 1.0);
         List<Entity> list = entity.level().getEntities(entity, new AABB((double)k, (double)r, (double)t, (double)l, (double)s, (double)u));
-        for (int v = 0; v < list.size(); ++v) {
-            Entity target_entity = (Entity) list.get(v);
+        for (Entity value : list) {
+            Entity target_entity = (Entity) value;
             if (!target_entity.ignoreExplosion(null) && (entityCondition == null || entityCondition.test(new Tuple<>(entity, target_entity)))) {
-                double w = Math.sqrt(target_entity.distanceToSqr(ExplosionPos)) / (double)q;
+                double w = Math.sqrt(target_entity.distanceToSqr(ExplosionPos)) / (double) q;
                 if (w <= 1.0) {
                     double x = target_entity.getX() - ExplosionPos.x();
                     double y = (target_entity instanceof PrimedTnt ? target_entity.getY() : target_entity.getEyeY()) - ExplosionPos.y();
@@ -75,14 +75,14 @@ public class ExplosionDamageEntityAction {
                         z /= aa;
                         double ab = (double) Explosion.getSeenPercent(ExplosionPos, target_entity);
                         double ac = (1.0 - w) * ab;
-                        if(explosion_damage_entity){
-                            target_entity.hurt(source, ((float)((int)((ac * ac + ac) / 2.0 * 7.0 * (double)q + 1.0))) * damageMultiplier + baseDamage);
+                        if (explosion_damage_entity) {
+                            target_entity.hurt(source, ((float) ((int) ((ac * ac + ac) / 2.0 * 7.0 * (double) q + 1.0))) * damageMultiplier + baseDamage);
                         }
                         double ad;
                         if (target_entity instanceof LivingEntity livingEntity) {
                             Holder<Enchantment> blastProtEntry = entity.level().registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.BLAST_PROTECTION);
                             int blastProtLevel = EnchantmentHelper.getEnchantmentLevel(blastProtEntry, livingEntity);
-                            ad = blastProtLevel > 0 ? ac * Mth.clamp(1.0 - (double)blastProtLevel * 0.15, 0.0, 1.0) : ac;
+                            ad = blastProtLevel > 0 ? ac * Mth.clamp(1.0 - (double) blastProtLevel * 0.15, 0.0, 1.0) : ac;
                         } else {
                             ad = ac;
                         }

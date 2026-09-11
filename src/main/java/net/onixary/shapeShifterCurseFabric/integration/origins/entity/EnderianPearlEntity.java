@@ -44,9 +44,8 @@ public class EnderianPearlEntity extends ThrowableItemProjectile {
       }
 
       if (!this.level().isClientSide && !this.isRemoved()) {
-         if (entity instanceof ServerPlayer) {
-            ServerPlayer serverPlayerEntity = (ServerPlayer)entity;
-		      if (serverPlayerEntity.connection.isAcceptingMessages() && serverPlayerEntity.level() == this.level() && !serverPlayerEntity.isSleeping()) {
+         if (entity instanceof ServerPlayer serverPlayerEntity) {
+             if (serverPlayerEntity.connection.isAcceptingMessages() && serverPlayerEntity.level() == this.level() && !serverPlayerEntity.isSleeping()) {
 
                if (entity.isPassenger()) {
                   entity.stopRiding();

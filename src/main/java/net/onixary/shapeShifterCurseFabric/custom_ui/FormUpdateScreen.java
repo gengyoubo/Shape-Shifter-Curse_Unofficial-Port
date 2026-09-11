@@ -84,14 +84,14 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
 
     // UNTESTED
     public void drawConnectLine(GuiGraphics context, PerkTree.PerkNode perkNode) {
-        ResourceLocation depend = perkNode.dependentPerkID;
+        ResourceLocation depend = perkNode.dependentPerkID();
         if (depend == null) return;
         PerkTree.PerkNode dependNodeMetaData = perkTree.getNode(depend);
         if (dependNodeMetaData == null) return;
-        int X1 = nodeWindowX + nodeBaseX + posXPerTier * perkNode.tier + nodeLineDependXOffset;
-        int X2 = nodeWindowX + nodeBaseX + posXPerTier * dependNodeMetaData.tier + nodeLineRootXOffset;
-        int Y1 = nodeWindowY + nodeBaseY + perkNode.y;
-        int Y2 = nodeWindowY + nodeBaseY + dependNodeMetaData.y;
+        int X1 = nodeWindowX + nodeBaseX + posXPerTier * perkNode.tier() + nodeLineDependXOffset;
+        int X2 = nodeWindowX + nodeBaseX + posXPerTier * dependNodeMetaData.tier() + nodeLineRootXOffset;
+        int Y1 = nodeWindowY + nodeBaseY + perkNode.y();
+        int Y2 = nodeWindowY + nodeBaseY + dependNodeMetaData.y();
         int HalfX = (X1 + X2) / 2;
         context.fill(X1, Y1, HalfX + 1, Y1, LineColor);
         context.fill(HalfX, Y1, HalfX + 1, Y2, LineColor);
@@ -102,14 +102,14 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     // playerGainedPerk 由调用方获取 毕竟drawNode调用频繁
     public void drawNode(GuiGraphics context, PerkTree.PerkNode perkNode, List<ResourceLocation> playerGainedPerk, int mouseX, int mouseY, float delta) {
         this.drawConnectLine(context, perkNode);
-        ResourceLocation icon = RegPerks.getPerkIcon(perkNode.perkID);
+        ResourceLocation icon = RegPerks.getPerkIcon(perkNode.perkID());
         if (icon == null) {
             icon = RegPerks.FALLBACK_PERK_ICON;
         }
-        if (playerGainedPerk.contains(perkNode.perkID)) {
+        if (playerGainedPerk.contains(perkNode.perkID())) {
             // TODO
         }
-        context.blit(icon, nodeWindowX + nodeBaseX + posXPerTier * perkNode.tier + NodeDrawStartX, nodeWindowY + nodeBaseY + perkNode.y + NodeDrawStartY, 0, 0, NodeTextureWidth, NodeTextureHeight, NodeTextureWidth, NodeTextureHeight);
+        context.blit(icon, nodeWindowX + nodeBaseX + posXPerTier * perkNode.tier() + NodeDrawStartX, nodeWindowY + nodeBaseY + perkNode.y() + NodeDrawStartY, 0, 0, NodeTextureWidth, NodeTextureHeight, NodeTextureWidth, NodeTextureHeight);
     }
 
     // UNTESTED
@@ -136,8 +136,8 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
 
     public @Nullable PerkTree.PerkNode getMouseNode(int mouseX, int mouseY) {
         for (PerkTree.PerkNode perkNode : this.perkTree.getAllNodes()) {
-            int centerX = nodeBaseX + posXPerTier * perkNode.tier;
-            int centerY = nodeBaseY + perkNode.y;
+            int centerX = nodeBaseX + posXPerTier * perkNode.tier();
+            int centerY = nodeBaseY + perkNode.y();
             int left = centerX + NodeSelectStartX;
             int top = centerY + NodeSelectStartY;
             if (mouseX >= left && mouseX < left + NodeSelectRectWidth && mouseY >= top && mouseY < top + NodeSelectRectHeight) {

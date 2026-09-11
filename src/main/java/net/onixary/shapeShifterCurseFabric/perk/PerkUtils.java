@@ -79,11 +79,11 @@ public class PerkUtils {
 
         PerkTree.PerkNode node = perkTree.getNode(perkID);
         if (node == null) return;
-        if (node.dependentPerkID != null) {
+        if (node.dependentPerkID() != null) {
             List<ResourceLocation> playerPerkList = getPlayerPerks(player, perkTreeID);
-            if (playerPerkList == null || !playerPerkList.contains(node.dependentPerkID)) return;
+            if (playerPerkList == null || !playerPerkList.contains(node.dependentPerkID())) return;
         }
-        int tier = node.tier;
+        int tier = node.tier();
         // TODO tier 判断 需要给升级方块加个玩家UUID表 记录最后一个使用的升级方块等级
         __addPerk(player, perkTreeID, perkID);
         removeInValidPerk(player, perkTreeID);

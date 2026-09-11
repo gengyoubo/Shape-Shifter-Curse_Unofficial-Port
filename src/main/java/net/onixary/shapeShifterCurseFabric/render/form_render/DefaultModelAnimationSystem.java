@@ -261,7 +261,7 @@ public class DefaultModelAnimationSystem implements IModelAnimationSystem, IModi
 
         public String getRoot() {
             if (!this.chain.isEmpty()) {
-                return this.chain.get(0);
+                return this.chain.getFirst();
             }
             return headBone;
         }
@@ -506,7 +506,7 @@ public class DefaultModelAnimationSystem implements IModelAnimationSystem, IModi
         float SWAY_SCALE = 0.05F;
         if(this.tailChain == null || !this.tailChain.canApply(player)) { return; }
         for (List<String> tailChain : this.tailChain.chain) {
-            GeoBone firstTail = model.getCachedGeoBone(tailChain.get(0));
+            GeoBone firstTail = model.getCachedGeoBone(tailChain.getFirst());
             if (firstTail == null) {
                 continue;
             }
@@ -538,7 +538,7 @@ public class DefaultModelAnimationSystem implements IModelAnimationSystem, IModi
         float SWAY_SCALE = 0.05F;
         if (this.headTailChain == null || !this.headTailChain.canApply(player)) { return; }
         for (List<String> tailChain : this.headTailChain.chain) {
-            GeoBone firstHeadTail = model.getCachedGeoBone(tailChain.get(0));
+            GeoBone firstHeadTail = model.getCachedGeoBone(tailChain.getFirst());
             if (firstHeadTail == null) {
                 continue;
             }
@@ -565,7 +565,7 @@ public class DefaultModelAnimationSystem implements IModelAnimationSystem, IModi
 
         if (this.wingChainL != null && this.wingChainL.canApply(player)) {
             for (List<String> wingChain : this.wingChainL.chain) {
-                GeoBone firstWing = model.getCachedGeoBone(wingChain.get(0));
+                GeoBone firstWing = model.getCachedGeoBone(wingChain.getFirst());
                 if (firstWing == null) { continue; }
                 firstWing.setRotY(sway_l);
                 firstWing.setRotX(-tailDragAmountVertical * 0.35f);
@@ -580,7 +580,7 @@ public class DefaultModelAnimationSystem implements IModelAnimationSystem, IModi
         }
         if (this.wingChainR != null && this.wingChainR.canApply(player)) {
             for (List<String> wingChain : this.wingChainR.chain) {
-                GeoBone firstWing = model.getCachedGeoBone(wingChain.get(0));
+                GeoBone firstWing = model.getCachedGeoBone(wingChain.getFirst());
                 if (firstWing == null)  continue;
                 firstWing.setRotY(sway_r);
                 firstWing.setRotX(-tailDragAmountVertical * 0.35f);

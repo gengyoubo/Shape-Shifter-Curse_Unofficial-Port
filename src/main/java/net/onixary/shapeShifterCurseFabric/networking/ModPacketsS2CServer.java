@@ -257,9 +257,7 @@ public class ModPacketsS2CServer {
 
     public static void sendPowerAnimationDataToNearPlayer(ServerPlayer player, @Nullable ResourceLocation animationId, int animationCount, int animationLength) {
         player.serverLevel().getPlayers(near_player -> near_player.distanceToSqr(player) <= 128 * 128).forEach(
-                nearPlayer -> {
-                    sendPowerAnimationDataToClient(nearPlayer, player.getUUID(), animationId, animationCount, animationLength);
-                }
+                nearPlayer -> sendPowerAnimationDataToClient(nearPlayer, player.getUUID(), animationId, animationCount, animationLength)
         );
     }
 

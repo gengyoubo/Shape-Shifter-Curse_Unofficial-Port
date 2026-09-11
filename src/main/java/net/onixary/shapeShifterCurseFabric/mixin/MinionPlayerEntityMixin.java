@@ -52,7 +52,7 @@ public abstract class MinionPlayerEntityMixin implements IPlayerEntityMinion {
         if (playerMinionComponent != null) {
             return playerMinionComponent.minions;
         } else {
-            return new ConcurrentHashMap<ResourceLocation, ArrayList<UUID>>();
+            return new ConcurrentHashMap<>();
         }
     }
 

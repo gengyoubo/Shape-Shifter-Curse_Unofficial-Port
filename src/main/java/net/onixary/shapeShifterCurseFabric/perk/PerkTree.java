@@ -11,18 +11,7 @@ import java.util.Map;
 
 // Common Side
 public class PerkTree {
-    public static class PerkNode {
-        public final ResourceLocation perkID;
-        public final int tier;
-        public final int y;
-        public final @Nullable ResourceLocation dependentPerkID;
-
-        public PerkNode(ResourceLocation perkID, int tier, int y, @Nullable ResourceLocation dependentPerkID) {
-            this.perkID = perkID;
-            this.tier = tier;
-            this.y = y;
-            this.dependentPerkID = dependentPerkID;
-        }
+    public record PerkNode(ResourceLocation perkID, int tier, int y, @Nullable ResourceLocation dependentPerkID) {
     }
 
     public final ResourceLocation treeID;

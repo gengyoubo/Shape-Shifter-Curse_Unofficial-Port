@@ -15,9 +15,9 @@ public class FormAnimatable implements GeoAnimatable {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        controllerRegistrar.add(new AnimationController<FormAnimatable>(this, ShapeShifterCurseFabric.MOD_ID, animationState -> {
-	        animationState.setAnimation(RawAnimation.begin().then("idle", Animation.LoopType.LOOP));
-	        return PlayState.CONTINUE;
+        controllerRegistrar.add(new AnimationController<>(this, ShapeShifterCurseFabric.MOD_ID, animationState -> {
+            animationState.setAnimation(RawAnimation.begin().then("idle", Animation.LoopType.LOOP));
+            return PlayState.CONTINUE;
         }));
     }
 

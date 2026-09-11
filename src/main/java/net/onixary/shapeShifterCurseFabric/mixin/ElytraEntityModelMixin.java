@@ -78,8 +78,7 @@ public abstract class ElytraEntityModelMixin<T extends LivingEntity> {
         }
 
         this.leftWing.y = m;
-        if (entity instanceof AbstractClientPlayer) {
-            AbstractClientPlayer abstractClientPlayerEntity = (AbstractClientPlayer)entity;
+        if (entity instanceof AbstractClientPlayer abstractClientPlayerEntity) {
             abstractClientPlayerEntity.elytraRotX += (k - abstractClientPlayerEntity.elytraRotX) * 0.1f;
             abstractClientPlayerEntity.elytraRotY += (n - abstractClientPlayerEntity.elytraRotY) * 0.1f;
             abstractClientPlayerEntity.elytraRotZ += (l - abstractClientPlayerEntity.elytraRotZ) * 0.1f;

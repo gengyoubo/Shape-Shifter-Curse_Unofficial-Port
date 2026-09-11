@@ -483,7 +483,7 @@ public class ShapeShifterCurseCommand {
     private static int setWorldTime(CommandContext<CommandSourceStack> commandContext) {
         ServerLevel world = commandContext.getSource().getLevel();
         world.setDayTime(IntegerArgumentType.getInteger(commandContext, "time"));
-        commandContext.getSource().sendSuccess(() -> {return Component.literal("World time set to " + commandContext.getSource().getLevel().getDayTime());}, false);
+        commandContext.getSource().sendSuccess(() -> Component.literal("World time set to " + commandContext.getSource().getLevel().getDayTime()), false);
         return 1;
     }
 
@@ -491,7 +491,7 @@ public class ShapeShifterCurseCommand {
         ServerLevel world = commandContext.getSource().getLevel();
         long TargetTime = world.getDayTime() + IntegerArgumentType.getInteger(commandContext, "time");
         world.setDayTime(TargetTime);
-        commandContext.getSource().sendSuccess(() -> {return Component.literal("World time set to " + TargetTime);}, false);
+        commandContext.getSource().sendSuccess(() -> Component.literal("World time set to " + TargetTime), false);
         return 1;
     }
 
@@ -526,7 +526,7 @@ public class ShapeShifterCurseCommand {
         ServerPlayer target = EntityArgument.getPlayer(commandContext, "target");
         PlayerFormComponent.COMPONENT.get(target).clear();
         PlayerFormComponent.COMPONENT.sync(target);
-        commandContext.getSource().sendSuccess(() -> {return Component.literal("Form Data Cleared!");}, false);
+        commandContext.getSource().sendSuccess(() -> Component.literal("Form Data Cleared!"), false);
         return 1;
     }
 
@@ -539,7 +539,7 @@ public class ShapeShifterCurseCommand {
         ServerPlayer target = EntityArgument.getPlayer(commandContext, "target");
         RegPlayerSkinComponent.SKIN_SETTINGS.get(target).clear();
         RegPlayerSkinComponent.SKIN_SETTINGS.sync(target);
-        commandContext.getSource().sendSuccess(() -> {return Component.literal("Skin Data Cleared!");}, false);
+        commandContext.getSource().sendSuccess(() -> Component.literal("Skin Data Cleared!"), false);
         return 1;
     }
 
@@ -552,7 +552,7 @@ public class ShapeShifterCurseCommand {
         ServerPlayer target = EntityArgument.getPlayer(commandContext, "target");
         RegPlayerMinionComponent.PLAYER_MINION_DATA.get(target).clear();
         RegPlayerMinionComponent.PLAYER_MINION_DATA.sync(target);
-        commandContext.getSource().sendSuccess(() -> {return Component.literal("Minion Data Cleared!");}, false);
+        commandContext.getSource().sendSuccess(() -> Component.literal("Minion Data Cleared!"), false);
         return 1;
     }
 
@@ -565,7 +565,7 @@ public class ShapeShifterCurseCommand {
         ServerPlayer target = EntityArgument.getPlayer(commandContext, "target");
         RegManaComponent.MANA.get(target).clear();
         RegManaComponent.MANA.sync(target);
-        commandContext.getSource().sendSuccess(() -> {return Component.literal("Mana Data Cleared!");}, false);
+        commandContext.getSource().sendSuccess(() -> Component.literal("Mana Data Cleared!"), false);
         return 1;
     }
 

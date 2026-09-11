@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-// 1.21.1 复原：RecipeSerializer 只有 codec()/streamCodec()，上游 1.20 手写 read(JsonObject)/write 无法用。
-// 采用语义层方案：字段用 ShapedRecipePattern（含 pattern/key Data，codec 完整），保留 catalyst/fuel_cost/time/
-// requireAdvancement 进度锁 + 全部匹配/合成逻辑；id 由 RecipeHolder.id() 管理，recipe 不再自带 id。
 public class AlterShapedRecipe extends AlterRecipe {
     public final ShapedRecipePattern pattern;
     public final ItemStack output;

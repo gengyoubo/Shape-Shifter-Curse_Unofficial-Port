@@ -80,12 +80,12 @@ public class BookOfShapeShifterScreenV2_P2 extends Screen implements WidgetEXUti
             instinctsContentText = CodexData.getContentText(CodexData.ContentType.INSTINCTS, currentPlayer);
         }
         this.addRenderableWidget(BuildDetailScreenButton(308, 13, 9, 9, instinctsContentText));
-        this.addRenderableWidget(new StringWidget(BookPosX + 242 * BookScale, BookPosY + 10 * BookScale, 63 * BookScale, 12 * BookScale, CodexData.headerInstincts, textRenderer).setTextColor(HeaderTextColor));
+        this.addRenderableWidget(new StringWidget(BookPosX + 242 * BookScale, BookPosY + 10 * BookScale, 63 * BookScale, 12 * BookScale, CodexData.headerInstincts, font).setColor(HeaderTextColor));
         // 在 BookOfShapeShifterScreen 未上色
         MultiLineTextWidget InstinctsDesc = new ScaleMultilineTextWidget(BookPosX + 220 * BookScale, BookPosY + 24 * BookScale, instinctsDescText, scaleTextRenderer, Scale).shadow(false).setMaxWidth(106 * BookScale);
         this.addRenderableWidget(InstinctsDesc);
         int InstinctsDescHeight = InstinctsDesc.getHeight();
-        ScaleScrollTextWidget Instincts = (ScaleScrollTextWidget) new ScaleScrollTextWidget(BookPosX + 220 * BookScale, BookPosY + 24 * BookScale + InstinctsDescHeight + Math.round(9 * Scale), 106 * BookScale, (112 - InstinctsDescHeight) * BookScale, Scale, instinctsContentText, scaleTextRenderer).shadow(false).setTextColor(DefaultTextColor);
+        ScaleScrollTextWidget Instincts = (ScaleScrollTextWidget) new ScaleScrollTextWidget(BookPosX + 220 * BookScale, BookPosY + 24 * BookScale + InstinctsDescHeight + Math.round(9 * Scale), 106 * BookScale, (112 - InstinctsDescHeight) * BookScale, Scale, instinctsContentText, scaleTextRenderer).shadow(false).setColor(DefaultTextColor);
         Instincts.setEnableScrollableIconRender(true);
         this.addWidget((WidgetEXUtils.IWidgetEX) Instincts);
         this.addRenderableWidget(Instincts);

@@ -1,8 +1,8 @@
 package net.onixary.shapeShifterCurseFabric.custom_ui;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,16 +28,16 @@ public final class CodexInstinctColumnHooks {
 
     public interface Provider {
         /** INSTINCTS 列说明行；null = 使用默认 CodexData。 */
-        @Nullable Text instinctsDesc(PlayerEntity player);
+        @Nullable Component instinctsDesc(Player player);
 
         /** INSTINCTS 列正文（主列与“+”详情共用同一次结果）；null = 使用默认 CodexData。 */
-        @Nullable Text instinctsContent(PlayerEntity player);
+        @Nullable Component instinctsContent(Player player);
 
         /** 列底贴图（宽度随列宽，高度按原始宽高比换算，锚定列区底部）；null = 不渲染。 */
-        @Nullable BottomTexture bottomTexture(PlayerEntity player);
+        @Nullable BottomTexture bottomTexture(Player player);
     }
 
     /** 贴图及其原始像素尺寸（用于保持宽高比）。 */
-    public record BottomTexture(Identifier id, int imageWidth, int imageHeight) {
+    public record BottomTexture(ResourceLocation id, int imageWidth, int imageHeight) {
     }
 }

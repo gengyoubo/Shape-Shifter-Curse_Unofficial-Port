@@ -1,22 +1,24 @@
 package net.onixary.shapeShifterCurseFabric.recipes.alter;
 
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.RecipeMatcher;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.JsonHelper;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.world.World;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
 import net.onixary.shapeShifterCurseFabric.blocks.block_entity.AlterBlockEntity;
 import net.onixary.shapeShifterCurseFabric.recipes.RecipeSerializerRegister;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -24,33 +26,33 @@ import java.util.List;
 import java.util.function.*;
 
 public class BuiltinAlterRecipe extends AlterRecipe {
-    public static final HashMap<Identifier, BARecipeConfig> BARecipeConfigMap = new HashMap<>();
+    public static final HashMap<ResourceLocation, BARecipeConfig> BARecipeConfigMap = new HashMap<>();
 
-    public static record BARecipeConfig (
-            BiPredicate<AlterBlockEntity, World> match,
-            BiFunction<AlterBlockEntity, DynamicRegistryManager, ItemStack> craft,
-            Function<DynamicRegistryManager, ItemStack> virtualOutput,
-            Predicate<PlayerEntity> canCraft,
+    public record BARecipeConfig (
+            BiPredicate<AlterBlockEntity, Level> match,
+            BiFunction<AlterBlockEntity, HolderLookup.Provider, ItemStack> craft,
+            Function<HolderLookup.Provider, ItemStack> virtualOutput,
+            Predicate<Player> canCraft,
             int recipeTime,
             int fuelUsage,
             Predicate<AlterBlockEntity> isInputsCountEnough,
             Consumer<AlterBlockEntity> consumeInputs,
             Function<AlterBlockEntity, List<ItemStack>> extraOutput
     ) {
-        public void register(Identifier id) {
+        public void register(ResourceLocation id) {
             BARecipeConfigMap.put(id, this);
         }
 
-        public static @Nullable BARecipeConfig get(Identifier id) {
+        public static @Nullable BARecipeConfig get(ResourceLocation id) {
             return BARecipeConfigMap.get(id);
         }
     }
 
     public static class BARecipeConfigBuilder {
-        BiPredicate<AlterBlockEntity, World> match = (alterBlockEntity, world) -> false;
-        BiFunction<AlterBlockEntity, DynamicRegistryManager, ItemStack> craft = (alterBlockEntity, registryManager) -> ItemStack.EMPTY;
-        Function<DynamicRegistryManager, ItemStack> virtualOutput = registryManager -> ItemStack.EMPTY;
-        Predicate<PlayerEntity> canCraft = player -> true;
+        BiPredicate<AlterBlockEntity, Level> match = (alterBlockEntity, world) -> false;
+        BiFunction<AlterBlockEntity, HolderLookup.Provider, ItemStack> craft = (alterBlockEntity, provider) -> ItemStack.EMPTY;
+        Function<HolderLookup.Provider, ItemStack> virtualOutput = provider -> ItemStack.EMPTY;
+        Predicate<Player> canCraft = player -> true;
         int recipeTime = 200;
         int fuelUsage = 1;
         Predicate<AlterBlockEntity> isInputsCountEnough = alterBlockEntity -> true;
@@ -59,10 +61,10 @@ public class BuiltinAlterRecipe extends AlterRecipe {
 
         public BARecipeConfigBuilder() { }
 
-        public BARecipeConfigBuilder match(BiPredicate<AlterBlockEntity, World> match) { this.match = match; return this; }
-        public BARecipeConfigBuilder craft(BiFunction<AlterBlockEntity, DynamicRegistryManager, ItemStack> craft) { this.craft = craft; return this; }
-        public BARecipeConfigBuilder virtualOutput(Function<DynamicRegistryManager, ItemStack> virtualOutput) { this.virtualOutput = virtualOutput; return this; }
-        public BARecipeConfigBuilder canCraft(Predicate<PlayerEntity> canCraft) { this.canCraft = canCraft; return this; }
+        public BARecipeConfigBuilder match(BiPredicate<AlterBlockEntity, Level> match) { this.match = match; return this; }
+        public BARecipeConfigBuilder craft(BiFunction<AlterBlockEntity, HolderLookup.Provider, ItemStack> craft) { this.craft = craft; return this; }
+        public BARecipeConfigBuilder virtualOutput(Function<HolderLookup.Provider, ItemStack> virtualOutput) { this.virtualOutput = virtualOutput; return this; }
+        public BARecipeConfigBuilder canCraft(Predicate<Player> canCraft) { this.canCraft = canCraft; return this; }
         public BARecipeConfigBuilder recipeTime(int recipeTime) { this.recipeTime = recipeTime; return this; }
         public BARecipeConfigBuilder fuelUsage(int fuelUsage) { this.fuelUsage = fuelUsage; return this; }
         public BARecipeConfigBuilder isInputsCountEnough(Predicate<AlterBlockEntity> isInputsCountEnough) { this.isInputsCountEnough = isInputsCountEnough; return this; }
@@ -73,22 +75,22 @@ public class BuiltinAlterRecipe extends AlterRecipe {
         // TODO 还差几个预设生成器 比如match函数 让它支持Shape和Shapeless
 
         // 坏了 还得整TriPredicate TriFunction 顺带在整个TriConsumer吧 函数还得传配方自身
-        public static BiPredicate<AlterBlockEntity, World> createMatch_Shapeless(DefaultedList<Ingredient> input, Ingredient catalyst) {
+        public static BiPredicate<AlterBlockEntity, Level> createMatch_Shapeless(NonNullList<Ingredient> input, Ingredient catalyst) {
             return (alterBlockEntity, world) -> {
                 if (catalyst != null) {
-                    ItemStack itemStack = alterBlockEntity.getStack(9);
+                    ItemStack itemStack = alterBlockEntity.getItem(9);
                     if (!catalyst.test(itemStack)) {
                         return false;
                     }
                 }
 
-                RecipeMatcher recipeMatcher = new RecipeMatcher();
+                StackedContents recipeMatcher = new StackedContents();
                 int i = 0;
                 for(int j = 0; j < 9; ++j) {
-                    ItemStack itemStack = alterBlockEntity.getStack(j);
+                    ItemStack itemStack = alterBlockEntity.getItem(j);
                     if (!itemStack.isEmpty()) {
                         ++i;
-                        recipeMatcher.addInput(itemStack, 1);
+                        recipeMatcher.accountStack(itemStack, 1);
                     }
                 }
 
@@ -98,11 +100,12 @@ public class BuiltinAlterRecipe extends AlterRecipe {
         }
     }
 
-    public final Identifier id;
+    /** 配方配置 id（指向 {@link BARecipeConfigMap}）；1.21.1 Recipe 不再自带配方 id（由 RecipeHolder 管理）。 */
+    public final ResourceLocation configId;
     public final BARecipeConfig recipeConfig;
 
-    public BuiltinAlterRecipe(Identifier id, BARecipeConfig recipeConfig) {
-        this.id = id;
+    public BuiltinAlterRecipe(ResourceLocation configId, BARecipeConfig recipeConfig) {
+        this.configId = configId;
         this.recipeConfig = recipeConfig;
     }
 
@@ -112,43 +115,38 @@ public class BuiltinAlterRecipe extends AlterRecipe {
     }
 
     @Override
-    public boolean matches(SidedInventory inventory, World world) {
-        if (inventory instanceof AlterBlockEntity alterBlockEntity) {
+    public boolean matches(RecipeInput recipeInput, Level world) {
+        if (recipeInput instanceof AlterBlockEntity alterBlockEntity) {
             return this.recipeConfig.match.test(alterBlockEntity, world);
         }
         return false;
     }
 
     @Override
-    public ItemStack craft(SidedInventory inventory, DynamicRegistryManager registryManager) {
-        if (inventory instanceof AlterBlockEntity alterBlockEntity) {
-            return this.recipeConfig.craft.apply(alterBlockEntity, registryManager);
+    public @NotNull ItemStack assemble(RecipeInput recipeInput, HolderLookup.Provider provider) {
+        if (recipeInput instanceof AlterBlockEntity alterBlockEntity) {
+            return this.recipeConfig.craft.apply(alterBlockEntity, provider);
         }
         return ItemStack.EMPTY;
     }
 
     @Override
-    public boolean fits(int width, int height) {
+    public boolean canCraftInDimensions(int width, int height) {
         return true;
     }
 
     @Override
-    public ItemStack getOutput(DynamicRegistryManager registryManager) {
-        return this.recipeConfig.virtualOutput.apply(registryManager);
+    public @NotNull ItemStack getResultItem(HolderLookup.Provider provider) {
+        return this.recipeConfig.virtualOutput.apply(provider);
     }
 
     @Override
-    public Identifier getId() {
-        return this.id;
-    }
-
-    @Override
-    public boolean canCraft(@Nullable PlayerEntity player) {
+    public boolean canCraft(@Nullable Player player) {
         return this.recipeConfig.canCraft.test(player);
     }
 
     @Override
-    public boolean InputsCountEnough(SidedInventory inventory) {
+    public boolean InputsCountEnough(WorldlyContainer inventory) {
         if (inventory instanceof AlterBlockEntity alterBlockEntity) {
             return this.recipeConfig.isInputsCountEnough.test(alterBlockEntity);
         }
@@ -156,14 +154,14 @@ public class BuiltinAlterRecipe extends AlterRecipe {
     }
 
     @Override
-    public void consumeInputs(SidedInventory inventory) {
+    public void consumeInputs(WorldlyContainer inventory) {
         if (inventory instanceof AlterBlockEntity alterBlockEntity) {
             this.recipeConfig.consumeInputs.accept(alterBlockEntity);
         }
     }
 
     @Override
-    public List<ItemStack> getExtraOutput(SidedInventory inventory) {
+    public List<ItemStack> getExtraOutput(WorldlyContainer inventory) {
         if (inventory instanceof AlterBlockEntity alterBlockEntity) {
             return this.recipeConfig.extraOutput.apply(alterBlockEntity);
         }
@@ -176,38 +174,47 @@ public class BuiltinAlterRecipe extends AlterRecipe {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public @NotNull RecipeSerializer<?> getSerializer() {
         return RecipeSerializerRegister.BUILTIN_ALTER_RECIPE;
     }
 
     public static class Serializer implements RecipeSerializer<BuiltinAlterRecipe> {
-        public BuiltinAlterRecipe read(Identifier identifier, JsonObject jsonObject) {
-            String configRaw = JsonHelper.getString(jsonObject, "recipe_config_id", "");
-            if (configRaw.isEmpty()) {
-                throw new JsonSyntaxException("recipe_config_id is required");
-            }
-            Identifier configId = Identifier.tryParse(configRaw);
-            if (configId == null) {
-                throw new JsonSyntaxException("recipe_config_id must be a valid identifier");
-            }
-            BARecipeConfig recipeConfig = BuiltinAlterRecipe.BARecipeConfig.get(configId);
-            return new BuiltinAlterRecipe(identifier, recipeConfig);
+        /** JSON：只存 recipe_config_id，decode 时从 BARecipeConfigMap 查运行时配置。 */
+        private static final MapCodec<BuiltinAlterRecipe> CODEC = RecordCodecBuilder.mapCodec(
+            instance -> instance.group(
+                ResourceLocation.CODEC.fieldOf("recipe_config_id").forGetter(r -> r.configId)
+            ).apply(instance, BuiltinAlterRecipe::fromConfigId)
+        );
+
+        private static final StreamCodec<RegistryFriendlyByteBuf, BuiltinAlterRecipe> STREAM_CODEC =
+            StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
+
+        @Override
+        public @NotNull MapCodec<BuiltinAlterRecipe> codec() {
+            return CODEC;
         }
 
-        public BuiltinAlterRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-            Identifier configId = packetByteBuf.readIdentifier();
-            if (configId == null) {
-                throw new RuntimeException("recipe_config_id must be a valid identifier");
-            }
-            BARecipeConfig recipeConfig = BuiltinAlterRecipe.BARecipeConfig.get(configId);
-            if (recipeConfig == null) {
-                throw new RuntimeException("recipe_config_id must be a valid identifier");
-            }
-            return new BuiltinAlterRecipe(identifier, recipeConfig);
+        @Override
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, BuiltinAlterRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
 
-        public void write(PacketByteBuf packetByteBuf, BuiltinAlterRecipe alterRecipe) {
-            packetByteBuf.writeIdentifier(alterRecipe.getId());
+        private static BuiltinAlterRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
+            ResourceLocation configId = buf.readResourceLocation();
+            return fromConfigId(configId);
         }
+
+        private static void toNetwork(RegistryFriendlyByteBuf buf, BuiltinAlterRecipe alterRecipe) {
+            buf.writeResourceLocation(alterRecipe.configId);
+        }
+    }
+
+    /** 从配置 id 查运行时配置构造配方（配置未注册则抛错）。 */
+    private static BuiltinAlterRecipe fromConfigId(ResourceLocation configId) {
+        BARecipeConfig recipeConfig = BARecipeConfig.get(configId);
+        if (recipeConfig == null) {
+            throw new JsonSyntaxException("Unknown recipe_config_id: " + configId);
+        }
+        return new BuiltinAlterRecipe(configId, recipeConfig);
     }
 }

@@ -114,14 +114,14 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
 
     // UNTESTED
     public void drawAllNode(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        if (this.client == null) return;
+        if (this.minecraft == null) return;
         context.enableScissor(nodeWindowX, nodeWindowY, nodeWindowX + nodeWindowWidth, nodeWindowY + nodeWindowHeight);
         PoseStack matrixStack = context.pose();
         matrixStack.pushPose();
         matrixStack.translate(cameraPosX, cameraPosY, 0);
         matrixStack.scale(cameraScale, cameraScale, 1.0f);
         PerkTree tree = this.perkTree;
-        List<ResourceLocation> playerGainedPerk = PerkUtils.getPlayerPerks(this.client.player, tree.getID());
+        List<ResourceLocation> playerGainedPerk = PerkUtils.getPlayerPerks(this.minecraft.player, tree.getID());
         for (PerkTree.PerkNode perkNode : tree.getAllNodes()) {
             this.drawNode(context, perkNode, playerGainedPerk, mouseX, mouseY, delta);
         }

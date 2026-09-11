@@ -140,7 +140,7 @@ public class ScaleScrollTextWidget extends MultiLineTextWidget implements Widget
     }
 
     @Override
-    public MultiLineTextWidget setMaxWidth(int maxWidth) {
+    public @NotNull MultiLineTextWidget setMaxWidth(int maxWidth) {
         this.realWidth = maxWidth;
         this.MaxWidth = Math.round(maxWidth * (1 / this.Scale));
         super.setMaxWidth(this.MaxWidth + this.modMaxWidth);

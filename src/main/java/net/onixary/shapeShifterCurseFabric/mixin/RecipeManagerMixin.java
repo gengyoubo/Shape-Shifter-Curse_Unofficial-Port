@@ -1,14 +1,16 @@
 package net.onixary.shapeShifterCurseFabric.mixin;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.JsonElement;
 import com.llamalad7.mixinextras.sugar.Local;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeManager;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.onixary.shapeShifterCurseFabric.event.SSCEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,28 +26,27 @@ import java.util.Map;
 public class RecipeManagerMixin {
     @Unique
     private void registerRecipe(
-            Map<RecipeType<?>, ImmutableMap.Builder<Identifier, Recipe<?>>> recipeBuilder,
-            ImmutableMap.Builder<Identifier, Recipe<?>> recipeIDBuilder,
-            @Nullable Identifier recipeID, @NotNull Recipe<?> recipe)
+            ImmutableMultimap.Builder<RecipeType<?>, RecipeHolder<?>> recipeBuilder,
+            ImmutableMap.Builder<ResourceLocation, RecipeHolder<?>> recipeIDBuilder,
+            @Nullable ResourceLocation recipeID, @NotNull Recipe<?> recipe)
     {
-        if (recipeID == null) {
-            recipeID = recipe.getId();
-        }
+        // 1.21.1 Recipe 不再自带 id（id 由 RecipeHolder 管理），无法从 recipe 兜底取 id
         if (recipeID == null) {
             return;
         }
         if (recipe.getType() == null) {
             return;
         }
-        ((ImmutableMap.Builder<Identifier, Recipe<?>>) recipeBuilder.computeIfAbsent(recipe.getType(), (recipeType) -> ImmutableMap.builder())).put(recipeID, recipe);
-        recipeIDBuilder.put(recipeID, recipe);
+        RecipeHolder<?> recipeHolder = new RecipeHolder<>(recipeID, recipe);
+        recipeBuilder.put(recipe.getType(), recipeHolder);
+        recipeIDBuilder.put(recipeID, recipeHolder);
     }
 
-    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/util/profiler/Profiler;)V", at = @At(value = "INVOKE", target = "Ljava/util/Map;entrySet()Ljava/util/Set;", ordinal = 0))
+    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At(value = "INVOKE", target = "Ljava/util/Map;entrySet()Ljava/util/Set;", ordinal = 0))
     private void onApply(
-            Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler, CallbackInfo ci,
-            @Local(ordinal = 1) Map<RecipeType<?>, ImmutableMap.Builder<Identifier, Recipe<?>>> recipeBuilder,
-            @Local(ordinal = 0) ImmutableMap.Builder<Identifier, Recipe<?>> recipeIDBuilder
+            Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci,
+            @Local(ordinal = 0) ImmutableMultimap.Builder<RecipeType<?>, RecipeHolder<?>> recipeBuilder,
+            @Local(ordinal = 0) ImmutableMap.Builder<ResourceLocation, RecipeHolder<?>> recipeIDBuilder
     ) {
         SSCEvent.BEFORE_APPLY_RECIPE.invoker().beforeApplyRecipe(
                 (recipeID, recipe) -> registerRecipe(recipeBuilder, recipeIDBuilder, recipeID, recipe)

@@ -7,6 +7,7 @@ import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -22,7 +23,7 @@ public class OnEndCursedMoon extends SimpleCriterionTrigger<OnEndCursedMoon.Cond
     }
 
     @Override
-    public Codec<Condition> codec() {
+    public @NotNull Codec<Condition> codec() {
         return Condition.CODEC;
     }
 

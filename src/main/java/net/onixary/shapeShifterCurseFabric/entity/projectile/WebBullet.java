@@ -1,14 +1,5 @@
 package net.onixary.shapeShifterCurseFabric.entity.projectile;
 
-import net.onixary.shapeShifterCurseFabric.additional_power.TrinketsConditionAction;
-import net.onixary.shapeShifterCurseFabric.additional_power.WebBridgeAction;
-import net.onixary.shapeShifterCurseFabric.blocks.RegCustomBlock;
-import net.onixary.shapeShifterCurseFabric.items.RegCustomItem;
-import net.onixary.shapeShifterCurseFabric.status_effects.EntangledEffectUtils;
-import org.jetbrains.annotations.Nullable;
-
-import static net.onixary.shapeShifterCurseFabric.entity.RegCustomEntity.WEB_BULLET;
-
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -26,6 +17,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.onixary.shapeShifterCurseFabric.additional_power.TrinketsConditionAction;
+import net.onixary.shapeShifterCurseFabric.additional_power.WebBridgeAction;
+import net.onixary.shapeShifterCurseFabric.blocks.RegCustomBlock;
+import net.onixary.shapeShifterCurseFabric.items.RegCustomItem;
+import net.onixary.shapeShifterCurseFabric.status_effects.EntangledEffectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static net.onixary.shapeShifterCurseFabric.entity.RegCustomEntity.WEB_BULLET;
 
 public class WebBullet extends ThrowableItemProjectile {
     public @Nullable LivingEntity owner = null;
@@ -73,7 +73,7 @@ public class WebBullet extends ThrowableItemProjectile {
     }
 
     @Override
-    public Item getDefaultItem() {
+    public @NotNull Item getDefaultItem() {
         return RegCustomItem.WEB_PROJECTILE;
     }
 

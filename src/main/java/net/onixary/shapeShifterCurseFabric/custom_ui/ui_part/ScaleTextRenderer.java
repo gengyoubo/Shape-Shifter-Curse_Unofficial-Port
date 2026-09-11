@@ -96,15 +96,15 @@ public class ScaleTextRenderer extends Font {
         return Mth.ceil(this.getSplitter().stringWidth(text) * this.Scale);
     }
 
-    public String plainSubstrByWidth(String text, int maxWidth, boolean backwards) {
+    public @NotNull String plainSubstrByWidth(String text, int maxWidth, boolean backwards) {
         return backwards ? this.getSplitter().plainTailByWidth(text, (int) (maxWidth * (1.0f / this.Scale)), Style.EMPTY) : this.getSplitter().plainHeadByWidth(text, maxWidth, Style.EMPTY);
     }
 
-    public String plainSubstrByWidth(String text, int maxWidth) {
+    public @NotNull String plainSubstrByWidth(String text, int maxWidth) {
         return this.getSplitter().plainHeadByWidth(text, (int) (maxWidth * (1.0f / this.Scale)), Style.EMPTY);
     }
 
-    public FormattedText substrByWidth(FormattedText text, int width) {
+    public @NotNull FormattedText substrByWidth(FormattedText text, int width) {
         return this.getSplitter().headByWidth(text, width, Style.EMPTY);
     }
 }

@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.animal.Ocelot;
+import org.jetbrains.annotations.NotNull;
 
 import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID;
 
@@ -20,7 +21,7 @@ public class TOcelotEntityRenderer extends MobRenderer<Ocelot, OcelotModel<Ocelo
 	}
 
 	@Override
-    public ResourceLocation getTextureLocation(Ocelot ocelotEntity) {
+    public @NotNull ResourceLocation getTextureLocation(Ocelot ocelotEntity) {
 		return TEXTURE;
 	}
 }

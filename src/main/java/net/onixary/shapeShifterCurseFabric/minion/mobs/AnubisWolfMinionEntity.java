@@ -28,6 +28,7 @@ import net.minecraft.world.level.pathfinder.PathType;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.minion.IMinion;
 import net.onixary.shapeShifterCurseFabric.minion.IPlayerEntityMinion;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -198,7 +199,7 @@ public class AnubisWolfMinionEntity extends Wolf implements IMinion<AnubisWolfMi
     }
 
     @Override
-    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+    public @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
         return InteractionResult.PASS;
     }
 
@@ -241,11 +242,11 @@ public class AnubisWolfMinionEntity extends Wolf implements IMinion<AnubisWolfMi
         return false;
     }
 
-    protected SoundEvent getHurtSound(DamageSource source) {
+    protected @NotNull SoundEvent getHurtSound(DamageSource source) {
         return SoundEvents.VEX_HURT;
     }
 
-    protected SoundEvent getDeathSound() {
+    protected @NotNull SoundEvent getDeathSound() {
         return SoundEvents.WITHER_SKELETON_DEATH;
     }
 
@@ -260,7 +261,7 @@ public class AnubisWolfMinionEntity extends Wolf implements IMinion<AnubisWolfMi
     }
 
     @Override
-    public Level level() {
+    public @NotNull Level level() {
         return super.level();
     }
 

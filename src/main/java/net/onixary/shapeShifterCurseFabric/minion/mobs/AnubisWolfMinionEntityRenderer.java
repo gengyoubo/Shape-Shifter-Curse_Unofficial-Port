@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.animal.Wolf;
+import org.jetbrains.annotations.NotNull;
 
 import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID;
 import static net.onixary.shapeShifterCurseFabric.minion.MinionRegisterClient.WOLF_MINION_LAYER;
@@ -23,7 +24,7 @@ public class AnubisWolfMinionEntityRenderer extends MobRenderer<Wolf, AnubisWolf
     }
 
     @Override
-    public ResourceLocation getTextureLocation(Wolf entity) {
+    public @NotNull ResourceLocation getTextureLocation(Wolf entity) {
         return ANUBIS_WOLF_MINION_TEXTURE;
     }
 }

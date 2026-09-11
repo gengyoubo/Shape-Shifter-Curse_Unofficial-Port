@@ -7,6 +7,7 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.NotNull;
 
 public class DiamondMiningClawToolMaterial implements Tier {
     public static final DiamondMiningClawToolMaterial INSTANCE = new DiamondMiningClawToolMaterial();
@@ -32,12 +33,12 @@ public class DiamondMiningClawToolMaterial implements Tier {
     }
 
     @Override
-    public TagKey<Block> getIncorrectBlocksForDrops() {
+    public @NotNull TagKey<Block> getIncorrectBlocksForDrops() {
         return BlockTags.INCORRECT_FOR_WOODEN_TOOL;
     }
 
     @Override
-    public Ingredient getRepairIngredient() {
+    public @NotNull Ingredient getRepairIngredient() {
         return Ingredient.of(new ItemLike[]{Items.DIAMOND});
     }
 }

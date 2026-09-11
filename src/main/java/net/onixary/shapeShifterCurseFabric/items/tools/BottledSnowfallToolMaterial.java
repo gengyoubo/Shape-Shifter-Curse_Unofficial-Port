@@ -7,6 +7,7 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.NotNull;
 
 public class BottledSnowfallToolMaterial implements Tier {
     public static final BottledSnowfallToolMaterial INSTANCE = new BottledSnowfallToolMaterial();
@@ -27,7 +28,7 @@ public class BottledSnowfallToolMaterial implements Tier {
     }
 
     @Override
-    public TagKey<Block> getIncorrectBlocksForDrops() {
+    public @NotNull TagKey<Block> getIncorrectBlocksForDrops() {
         return BlockTags.INCORRECT_FOR_WOODEN_TOOL;
     }
 
@@ -37,7 +38,7 @@ public class BottledSnowfallToolMaterial implements Tier {
     }
 
     @Override
-    public Ingredient getRepairIngredient() {
+    public @NotNull Ingredient getRepairIngredient() {
         return Ingredient.of(new ItemLike[]{Items.POWDER_SNOW_BUCKET});
     }
 }

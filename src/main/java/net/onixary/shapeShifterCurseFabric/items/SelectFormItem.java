@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2CServer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class SelectFormItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+    public @NotNull InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
         if (!world.isClientSide) {
             ModPacketsS2CServer.OpenFormSelectMenu((ServerPlayer) user, user);
         }
@@ -30,7 +31,7 @@ public class SelectFormItem extends Item {
     }
 
     @Override
-    public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
+    public @NotNull InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
         if (entity instanceof Player player) {
             if (!user.level().isClientSide) {
                 ModPacketsS2CServer.OpenFormSelectMenu((ServerPlayer) user, player);

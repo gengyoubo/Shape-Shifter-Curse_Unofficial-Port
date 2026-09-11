@@ -10,6 +10,7 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class SpiderFluidCocoon extends Item {
     }
 
     @Override
-    public SoundEvent getEatingSound(){
+    public @NotNull SoundEvent getEatingSound(){
         return SoundEvents.GENERIC_DRINK;
     }
 

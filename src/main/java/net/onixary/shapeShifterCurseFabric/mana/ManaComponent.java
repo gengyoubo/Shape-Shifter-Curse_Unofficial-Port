@@ -93,7 +93,7 @@ public class ManaComponent implements AutoSyncedComponent {
         return ManaTypeID != null;
     }
 
-    public ResourceLocation getManaTypeID() {
+    public @Nullable ResourceLocation getManaTypeID() {
         return ManaTypeID;
     }
 

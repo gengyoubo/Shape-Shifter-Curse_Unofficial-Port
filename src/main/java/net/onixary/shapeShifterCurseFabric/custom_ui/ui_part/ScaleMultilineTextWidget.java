@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -26,7 +27,7 @@ public class ScaleMultilineTextWidget extends MultiLineTextWidget {
         this.shadow = false;
     }
 
-    public MultiLineTextWidget setMaxWidth(int maxWidth) {
+    public @NotNull MultiLineTextWidget setMaxWidth(int maxWidth) {
         super.setMaxWidth(Math.round(maxWidth * (1 / this.Scale)));
         return this;
     }

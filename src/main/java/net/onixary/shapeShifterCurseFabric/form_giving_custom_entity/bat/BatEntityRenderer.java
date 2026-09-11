@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ambient.Bat;
+import org.jetbrains.annotations.NotNull;
 
 import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID;
 
@@ -18,7 +19,7 @@ public class BatEntityRenderer extends MobRenderer<Bat, net.minecraft.client.mod
         super(context, new BatModel(context.bakeLayer(ModelLayers.BAT)), 0.25F);
     }
 
-    public ResourceLocation getTextureLocation(Bat batEntity) {
+    public @NotNull ResourceLocation getTextureLocation(Bat batEntity) {
         return TEXTURE;
     }
 

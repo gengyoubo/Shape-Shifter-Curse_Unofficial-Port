@@ -10,6 +10,7 @@ import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -53,7 +54,7 @@ public abstract class MinionBase extends TamableAnimal implements IMinion<Minion
     }
 
     @Override
-    public Level level() {
+    public @NotNull Level level() {
         return super.level();
     }
 

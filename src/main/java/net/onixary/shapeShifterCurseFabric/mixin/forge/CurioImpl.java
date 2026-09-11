@@ -5,6 +5,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.onixary.shapeShifterCurseFabric.items.accessory.AccessoryItem;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -65,7 +66,7 @@ public class CurioImpl implements ICurioItem {
     }
 
     @Override
-    public ICurio.DropRule getDropRule(SlotContext slotContext, DamageSource source, boolean recentlyHit, ItemStack stack) {
+    public ICurio.@NotNull DropRule getDropRule(SlotContext slotContext, DamageSource source, boolean recentlyHit, ItemStack stack) {
         return switch (((AccessoryItem) (Object) this).getDropRule(stack, slotContext.entity(), getSlotData(slotContext))) {
             case KEEP -> ICurio.DropRule.ALWAYS_KEEP;
             case DROP -> ICurio.DropRule.ALWAYS_DROP;

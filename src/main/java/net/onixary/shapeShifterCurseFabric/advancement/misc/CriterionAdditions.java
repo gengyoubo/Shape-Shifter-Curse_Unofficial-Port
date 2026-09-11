@@ -24,7 +24,7 @@ public final class CriterionAdditions {
     public static final class OnTransformForm extends SimpleCriterionTrigger<OnTransformForm.Cnd> {
         public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("shape-shifter-curse", "on_transform_form");
         public ResourceLocation getId() { return ID; }
-        public Codec<Cnd> codec() { return Cnd.CODEC; }
+        public @NotNull Codec<Cnd> codec() { return Cnd.CODEC; }
         public void trigger(ServerPlayer player) { trigger(player, Cnd::matchesAny); }
         public void trigger(ServerPlayer player, ResourceLocation formID) { trigger(player, c -> c.matches(formID)); }
         public record Cnd(Optional<ContextAwarePredicate> player, List<String> form, Optional<List<Integer>> formTier, Optional<List<String>> flags, Optional<List<String>> notFlags) implements SimpleCriterionTrigger.SimpleInstance {

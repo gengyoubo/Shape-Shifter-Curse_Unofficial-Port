@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.HitResult;
 import net.onixary.shapeShifterCurseFabric.integration.origins.registry.ModEntities;
+import org.jetbrains.annotations.NotNull;
 
 public class EnderianPearlEntity extends ThrowableItemProjectile {
    public EnderianPearlEntity(EntityType<? extends EnderianPearlEntity> entityType, Level world) {
@@ -30,7 +31,7 @@ public class EnderianPearlEntity extends ThrowableItemProjectile {
       super(ModEntities.ENDERIAN_PEARL, x, y, z, world);
    }
 
-   protected Item getDefaultItem() {
+   protected @NotNull Item getDefaultItem() {
       return Items.ENDER_PEARL;
    }
 

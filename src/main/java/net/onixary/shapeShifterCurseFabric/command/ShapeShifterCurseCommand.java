@@ -7,6 +7,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.github.apace100.apoli.component.PowerHolderComponent;
+import io.github.apace100.apoli.power.ConditionedAttributePower;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
@@ -14,8 +16,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
+import net.onixary.shapeShifterCurseFabric.additional_power.CustomWaterBreathingPower;
 import net.onixary.shapeShifterCurseFabric.cursed_moon.CursedMoon;
 import net.onixary.shapeShifterCurseFabric.entity.projectile.WebBullet;
 import net.onixary.shapeShifterCurseFabric.mana.RegManaComponent;
@@ -37,7 +43,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -235,7 +244,72 @@ public class ShapeShifterCurseCommand {
                                         )
                                 )
                         )
+                        // 【临时诊断】axolotl3 氧气血量排查用，定位后可删
+                        .then(literal("debug_attrs").requires(cs -> cs.hasPermission(2))
+                                .then(argument("target", EntityArgument.player())
+                                        .executes(ShapeShifterCurseCommand::debugAttrs)
+                                )
+                        )
         );
+    }
+
+    /**
+     * 【临时诊断】dump 目标玩家的氧气、最大生命值 modifier 列表、以及相关 power 的激活状态。
+     *
+     * <p>用于定位 axolotl3「氧气血量不生效」：必须把 air 与 power 激活状态放在<strong>同一时刻</strong>取，
+     * 才能分辨是 air 稳态被破坏、还是 power 自身在闪。定位完成后本方法与 debug_attrs 子命令一并删除。</p>
+     */
+    private static int debugAttrs(CommandContext<CommandSourceStack> commandContext) throws CommandSyntaxException {
+        ServerPlayer target = EntityArgument.getPlayer(commandContext, "target");
+        StringBuilder sb = new StringBuilder();
+        sb.append("[SSC-AttrDiag] player=").append(target.getName().getString());
+        sb.append("\n  air=").append(target.getAirSupply()).append(" / ").append(target.getMaxAirSupply());
+
+        AttributeInstance maxHealth = target.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            sb.append("\n  maxHealth: base=").append(maxHealth.getBaseValue())
+                    .append(" value=").append(maxHealth.getValue())
+                    .append(" getMaxHealth=").append(target.getMaxHealth());
+            sb.append("\n  maxHealth modifiers(").append(maxHealth.getModifiers().size()).append("):");
+            for (AttributeModifier modifier : maxHealth.getModifiers()) {
+                sb.append("\n    ").append(modifier.id())
+                        .append(" = ").append(modifier.amount())
+                        .append(" / ").append(modifier.operation());
+            }
+            // 去掉结尾的 _<数字> 再分组：同一逻辑 modifier 若有多个 id 副本（基数相同）会被列出
+            Map<String, Long> byBase = maxHealth.getModifiers().stream()
+                    .collect(Collectors.groupingBy(m -> m.id().getPath().replaceAll("_\\d+$", ""), Collectors.counting()));
+            sb.append("\n  duplicateBases: ").append(byBase.entrySet().stream()
+                    .filter(entry -> entry.getValue() > 1)
+                    .map(entry -> entry.getKey() + "x" + entry.getValue())
+                    .toList());
+        }
+
+        AttributeInstance speed = target.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speed != null) {
+            sb.append("\n  movementSpeed: base=").append(speed.getBaseValue())
+                    .append(" value=").append(speed.getValue())
+                    .append(" modifiers=").append(speed.getModifiers().size());
+        }
+
+        List<CustomWaterBreathingPower> breathPowers = PowerHolderComponent.getPowers(target, CustomWaterBreathingPower.class);
+        sb.append("\n  CustomWaterBreathingPower: count=").append(breathPowers.size());
+        for (CustomWaterBreathingPower power : breathPowers) {
+            sb.append("\n    active=").append(power.isActive())
+                    .append(" landLevel=").append(power.getLandWaterBreathLevel());
+        }
+
+        List<ConditionedAttributePower> conditionedPowers = PowerHolderComponent.getPowers(target, ConditionedAttributePower.class);
+        sb.append("\n  ConditionedAttributePower: count=").append(conditionedPowers.size());
+        for (ConditionedAttributePower power : conditionedPowers) {
+            sb.append("\n    ").append(power.getType().getIdentifier())
+                    .append(" active=").append(power.isActive());
+        }
+
+        String report = sb.toString();
+        ShapeShifterCurseFabric.LOGGER.info(report);
+        commandContext.getSource().sendSuccess(() -> Component.literal(report), false);
+        return 1;
     }
 
     private static int setForm(CommandContext<CommandSourceStack> commandContext, Component failText) throws CommandSyntaxException {

@@ -131,11 +131,6 @@ public class ModPacketsC2S {
         ServerPlayNetworking.registerGlobalReceiver(BytePayload.id(ModPackets.UPLOAD_PATRON_AUTH_FILE), ModPacketsC2S::receivePatronAuthFile);
     }
 
-    public static void sendDetachRequest(ServerPlayer player) {
-        FriendlyByteBuf buf = PacketByteBufs.create();
-        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(JUMP_DETACH_REQUEST_ID),  buf));
-    }
-
     private static void onUpdatePlayerCustomConfig(BytePayload payload, ServerPlayNetworking.Context ctx) {
         FriendlyByteBuf buf = payload.data();
         boolean keepOriginalSkin = buf.readBoolean();

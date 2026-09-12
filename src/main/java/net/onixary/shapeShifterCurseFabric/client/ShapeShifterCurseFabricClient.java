@@ -37,6 +37,7 @@ import net.onixary.shapeShifterCurseFabric.minion.MinionRegisterClient;
 import net.onixary.shapeShifterCurseFabric.minion.mobs.AnubisWolfMinionEntityRenderer;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsC2S;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2C;
+import net.onixary.shapeShifterCurseFabric.networking.NetworkRegistrationSelfCheck;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.TransformManager;
 import net.onixary.shapeShifterCurseFabric.render.form_render.FormRenderUtils;
 import net.onixary.shapeShifterCurseFabric.render.render_layer.FurGradientRenderLayer;
@@ -238,6 +239,8 @@ public class ShapeShifterCurseFabricClient implements ClientModInitializer {
 		registerEntityModels();
 		ModPacketsS2C.register();
         ModPacketsC2S.registerClient();
+        // 网络包注册自检：防「注册了类型却忘挂 receiver」的静默失效，在客户端启动完成时执行
+        NetworkRegistrationSelfCheck.registerClient();
 
 		registerShaderResource();
 		FurGradientRenderLayer.onInitializeClient();

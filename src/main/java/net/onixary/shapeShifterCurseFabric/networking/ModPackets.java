@@ -4,8 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 
 public class ModPackets {
-    public static final ResourceLocation CHANNEL = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "main");
-
     public static final ResourceLocation VALIDATE_START_BOOK_BUTTON = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "validate_start_book_button");
 
     // 新增服务端到客户端的附件同步包

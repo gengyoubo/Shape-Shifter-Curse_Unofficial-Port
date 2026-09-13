@@ -1,4 +1,4 @@
-package net.onixary.shapeShifterCurseFabric.recipes.alter;
+package net.onixary.shapeShifterCurseFabric.recipes.altar;
 
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class AlterRecipe implements Recipe<RecipeInput> {
+public abstract class AltarRecipe implements Recipe<RecipeInput> {
 
     @Override
     public @NotNull RecipeType<?> getType() {

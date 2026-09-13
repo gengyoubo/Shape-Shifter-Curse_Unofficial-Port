@@ -1,24 +1,22 @@
-package net.onixary.shapeShifterCurseFabric.recipes.alter;
+package net.onixary.shapeShifterCurseFabric.recipes.altar;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.level.Level;
 import net.onixary.shapeShifterCurseFabric.recipes.RecipeSerializerRegister;
 import org.jetbrains.annotations.NotNull;
@@ -26,20 +24,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class AlterShapelessRecipe extends AlterRecipe {
+public class AltarShapedRecipe extends AltarRecipe {
+    public final ShapedRecipePattern pattern;
     public final ItemStack output;
-    public final NonNullList<Ingredient> input;
     public final @Nullable Ingredient catalyst;
     public final int recipeTime;
     public final int fuelCostPerTick;
-
     public final @Nullable ResourceLocation requireAdvancement;
 
-    public AlterShapelessRecipe(ItemStack output, NonNullList<Ingredient> input, @Nullable Ingredient catalyst, int recipeTime, int fuelCostPerTick, @Nullable ResourceLocation requireAdvancement) {
+    public AltarShapedRecipe(ShapedRecipePattern pattern, ItemStack output, @Nullable Ingredient catalyst, int recipeTime, int fuelCostPerTick, @Nullable ResourceLocation requireAdvancement) {
+        this.pattern = pattern;
         this.output = output;
-        this.input = input;
-        this.recipeTime = recipeTime;
         this.catalyst = catalyst;
+        this.recipeTime = recipeTime;
         this.fuelCostPerTick = fuelCostPerTick;
         this.requireAdvancement = requireAdvancement;
     }
@@ -70,6 +67,27 @@ public class AlterShapelessRecipe extends AlterRecipe {
         return false;
     }
 
+    private boolean matchesPattern(RecipeInput inv, int offsetX, int offsetY, boolean flipped) {
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                int k = i - offsetX;
+                int l = j - offsetY;
+                Ingredient ingredient = Ingredient.EMPTY;
+                if (k >= 0 && l >= 0 && k < this.pattern.width() && l < this.pattern.height()) {
+                    if (flipped) {
+                        ingredient = this.pattern.ingredients().get(this.pattern.width() - k - 1 + l * this.pattern.width());
+                    } else {
+                        ingredient = this.pattern.ingredients().get(k + l * this.pattern.width());
+                    }
+                }
+                if (!ingredient.test(inv.getItem(i + j * 3))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     @Override
     public boolean matches(RecipeInput recipeInput, Level world) {
         if (this.catalyst != null) {
@@ -79,23 +97,17 @@ public class AlterShapelessRecipe extends AlterRecipe {
             }
         }
 
-        StackedContents recipeMatcher = new StackedContents();
-        int i = 0;
-        for (int j = 0; j < 9; ++j) {
-            ItemStack itemStack = recipeInput.getItem(j);
-            if (!itemStack.isEmpty()) {
-                ++i;
-                recipeMatcher.accountStack(itemStack, 1);
+        for (int i = 0; i <= 3 - this.pattern.width(); ++i) {
+            for (int j = 0; j <= 3 - this.pattern.height(); ++j) {
+                if (this.matchesPattern(recipeInput, i, j, true)) {
+                    return true;
+                }
+                if (this.matchesPattern(recipeInput, i, j, false)) {
+                    return true;
+                }
             }
         }
-        return i == this.input.size() && recipeMatcher.canCraft(this, null);
-    }
-
-    // [1.21.1 修复] Recipe.getIngredients() 默认返回空 NonNullList，StackedContents.canCraft 会读空 ingredients →
-    // shapeless 配方匹配必失败。改为返回 input。
-    @Override
-    public @NotNull NonNullList<Ingredient> getIngredients() {
-        return this.input;
+        return false;
     }
 
     @Override
@@ -110,7 +122,7 @@ public class AlterShapelessRecipe extends AlterRecipe {
 
     @Override
     public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= this.input.size();
+        return width >= this.pattern.width() && height >= this.pattern.height();
     }
 
     @Override
@@ -120,48 +132,37 @@ public class AlterShapelessRecipe extends AlterRecipe {
 
     @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
-        return RecipeSerializerRegister.ALTER_SHAPELESS_RECIPE;
+        return RecipeSerializerRegister.ALTER_SHAPED_RECIPE;
     }
 
-    public static class Serializer implements RecipeSerializer<AlterShapelessRecipe> {
-        private static final MapCodec<AlterShapelessRecipe> CODEC = RecordCodecBuilder.mapCodec(
+    public static class Serializer implements RecipeSerializer<AlterShapedRecipe> {
+        private static final MapCodec<AlterShapedRecipe> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
+                ShapedRecipePattern.MAP_CODEC.forGetter(r -> r.pattern),
                 ItemStack.STRICT_CODEC.fieldOf("result").forGetter(r -> r.output),
-                Ingredient.CODEC_NONEMPTY.listOf().fieldOf("ingredients").flatXmap(
-                    list -> {
-                        Ingredient[] arr = list.stream().filter(i -> !i.isEmpty()).toArray(Ingredient[]::new);
-                        if (arr.length == 0) {
-                            return DataResult.error(() -> "No ingredients for alter shapeless recipe");
-                        }
-                        if (arr.length > 9) {
-                            return DataResult.error(() -> "Too many ingredients for alter shapeless recipe");
-                        }
-                        return DataResult.success(NonNullList.of(Ingredient.EMPTY, arr));
-                    }, DataResult::success)
-                    .forGetter(r -> r.input),
                 Ingredient.CODEC_NONEMPTY.optionalFieldOf("catalyst").forGetter(r -> Optional.ofNullable(r.catalyst)),
                 Codec.INT.optionalFieldOf("time", 200).forGetter(r -> r.recipeTime),
                 Codec.INT.optionalFieldOf("fuel_cost", 1).forGetter(r -> r.fuelCostPerTick),
                 ResourceLocation.CODEC.optionalFieldOf("require_advancement").forGetter(r -> Optional.ofNullable(r.requireAdvancement))
-            ).apply(instance, (output, input, catalyst, time, fuelCost, requireAdvancement) ->
-                new AlterShapelessRecipe(output, input, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
+            ).apply(instance, (pattern, output, catalyst, time, fuelCost, requireAdvancement) ->
+                new AlterShapedRecipe(pattern, output, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
         );
 
-        private static final StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> STREAM_CODEC = StreamCodec.of(
+        private static final StreamCodec<RegistryFriendlyByteBuf, AlterShapedRecipe> STREAM_CODEC = StreamCodec.of(
             Serializer::toNetwork, Serializer::fromNetwork
         );
 
         @Override
-        public @NotNull MapCodec<AlterShapelessRecipe> codec() {
+        public @NotNull MapCodec<AlterShapedRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> streamCodec() {
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AlterShapedRecipe> streamCodec() {
             return STREAM_CODEC;
         }
 
-        private static AlterShapelessRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
+        private static AlterShapedRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
             Ingredient catalyst = null;
             if (buf.readBoolean()) {
                 catalyst = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
@@ -170,16 +171,14 @@ public class AlterShapelessRecipe extends AlterRecipe {
             if (buf.readBoolean()) {
                 requireAdvancement = ResourceLocation.STREAM_CODEC.decode(buf);
             }
-            int n = buf.readVarInt();
-            NonNullList<Ingredient> list = NonNullList.withSize(n, Ingredient.EMPTY);
-            list.replaceAll(i -> Ingredient.CONTENTS_STREAM_CODEC.decode(buf));
+            ShapedRecipePattern pattern = ShapedRecipePattern.STREAM_CODEC.decode(buf);
             ItemStack output = ItemStack.STREAM_CODEC.decode(buf);
             int time = buf.readVarInt();
             int fuelCost = buf.readVarInt();
-            return new AlterShapelessRecipe(output, list, catalyst, time, fuelCost, requireAdvancement);
+            return new AltarShapedRecipe(pattern, output, catalyst, time, fuelCost, requireAdvancement);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf buf, AlterShapelessRecipe r) {
+        private static void toNetwork(RegistryFriendlyByteBuf buf, AlterShapedRecipe r) {
             if (r.catalyst != null) {
                 buf.writeBoolean(true);
                 Ingredient.CONTENTS_STREAM_CODEC.encode(buf, r.catalyst);
@@ -192,10 +191,7 @@ public class AlterShapelessRecipe extends AlterRecipe {
             } else {
                 buf.writeBoolean(false);
             }
-            buf.writeVarInt(r.input.size());
-            for (Ingredient ingredient : r.input) {
-                Ingredient.CONTENTS_STREAM_CODEC.encode(buf, ingredient);
-            }
+            ShapedRecipePattern.STREAM_CODEC.encode(buf, r.pattern);
             ItemStack.STREAM_CODEC.encode(buf, r.output);
             buf.writeVarInt(r.recipeTime);
             buf.writeVarInt(r.fuelCostPerTick);

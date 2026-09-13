@@ -15,6 +15,7 @@ import net.onixary.shapeShifterCurseFabric.additional_power.ActionOnJumpPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.ActionOnSprintingToSneakingPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.BatBlockAttachPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.JumpEventCondition;
+import net.onixary.shapeShifterCurseFabric.perk.PerkUtils;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.IPlayerAnimController;
 import net.onixary.shapeShifterCurseFabric.player_form.DynamicForm;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
@@ -107,6 +108,11 @@ public class ModPacketsC2S {
         ServerPlayNetworking.registerGlobalReceiver(
                 BytePayload.id(UPLOAD_PATRON_AUTH_FILE),
                 ModPacketsC2S::receivePatronAuthFile
+        );
+
+        ServerPlayNetworking.registerGlobalReceiver(
+                ADD_PERK,
+                ModPacketsC2S::receiveAddPerk
         );
     }
 
@@ -227,12 +233,20 @@ public class ModPacketsC2S {
     private static void receivePatronAuthFile(BytePayload payload, ServerPlayNetworking.Context ctx) {
         byte[] data = payload.data().readByteArray();
         if (data != null) {
-            ServerPlayer player = ctx.player();
-            if (player != null) {
-                AuthServer.loadPatronAuthFile(player, new FriendlyByteBuf(Unpooled.wrappedBuffer(data)));
-            }
+            minecraftServer.execute(() -> {
+                AuthServer.loadPatronAuthFile(playerEntity, new PacketByteBuf(Unpooled.wrappedBuffer(data)));
+            });
         }
     }
+
+    private static void receiveAddPerk(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
+        Identifier perkTreeId = packetByteBuf.readIdentifier();
+        Identifier perkId = packetByteBuf.readIdentifier();
+        minecraftServer.execute(() -> {
+            PerkUtils.addPerkFromClient(playerEntity, perkTreeId, perkId);
+        });
+    }
+}
 
     /** Called from client initializer: registers C2S payload codecs so the client can send. */
     public static void registerClient() {

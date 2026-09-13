@@ -68,4 +68,5 @@ public class ModPackets {
     public static final ResourceLocation MELT_AUTH_SUB_KEY = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "melt_auth_sub_key");
 
     public static final ResourceLocation SET_SUPER_USER_LEVEL = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "set_super_user_level");
+    public static final Identifier ADD_PERK = new Identifier(ShapeShifterCurseFabric.MOD_ID, "add_perk");
 }

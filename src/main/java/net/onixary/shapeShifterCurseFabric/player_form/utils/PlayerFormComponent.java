@@ -45,6 +45,7 @@ public class PlayerFormComponent implements AutoSyncedComponent {
     public float instinctRate = 0.0f;
     public HashMap<ResourceLocation, InstinctUtils.InstinctEffect> instinctEffects = new HashMap<>();
 
+    public Identifier nowPerkTree = RegPerks.EMPTY_PERK_TREE;
     public HashMap<ResourceLocation, List<ResourceLocation>> formPerkMap = new HashMap<>();
 
     // 临时变量
@@ -161,6 +162,9 @@ public class PlayerFormComponent implements AutoSyncedComponent {
                 instinctEffects.put(ResourceLocation.tryParse(key), InstinctUtils.InstinctEffect.fromNBT(effects.getCompound(key)));
             }
         }
+        if (tag.contains("now_perk_tree")) {
+            nowPerkTree = Identifier.tryParse(tag.getString("now_perk_tree"));
+        }
         if (tag.contains("perks")) {
             formPerkMap.clear();
             CompoundTag perks = tag.getCompound("perks");
@@ -219,11 +223,13 @@ public class PlayerFormComponent implements AutoSyncedComponent {
             entry.getValue().toNBT(effect);
             effects.put(entry.getKey().toString(), effect);
         }
-        CompoundTag perks = new CompoundTag();
-        for (Map.Entry<ResourceLocation, List<ResourceLocation>> perkEntry : formPerkMap.entrySet()) {
-            ListTag perkTree = new ListTag();
-            for (ResourceLocation perkID : perkEntry.getValue()) {
-                perkTree.add(StringTag.valueOf(perkID.toString()));
+        tag.put("instinctEffects", effects);
+        tag.putString("now_perk_tree", nowPerkTree.toString());
+        NbtCompound perks = new NbtCompound();
+        for (Map.Entry<Identifier, List<Identifier>> perkEntry : formPerkMap.entrySet()) {
+            NbtList perkTree = new NbtList();
+            for (Identifier perkID : perkEntry.getValue()) {
+                perkTree.add(NbtString.of(perkID.toString()));
             }
             if (perkTree.isEmpty()) {
                 continue;
@@ -231,7 +237,6 @@ public class PlayerFormComponent implements AutoSyncedComponent {
             perks.put(perkEntry.getKey().toString(), perkTree);
         }
         tag.put("perks", perks);
-        tag.put("instinctEffects", effects);
     }
 
     public void clear() {

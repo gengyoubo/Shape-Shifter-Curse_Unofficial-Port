@@ -643,13 +643,13 @@ public class ModPacketsS2C {
         ctx.client().execute(() -> SuperUserUtils.setClientSULevel(level));
     }
 
-    public static void sendAddPerk(Identifier perkTreeID, Identifier perkID) {
+    public static void sendAddPerk(ResourceLocation perkTreeID, ResourceLocation perkID) {
         if (perkTreeID == null || perkID == null) {
             return;
         }
-        PacketByteBuf buf = PacketByteBufs.create();
-        buf.writeIdentifier(perkTreeID);
-        buf.writeIdentifier(perkID);
-        ClientPlayNetworking.send(ADD_PERK, buf);
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        buf.writeResourceLocation(perkTreeID);
+        buf.writeResourceLocation(perkID);
+        ClientPlayNetworking.send(new BytePayload(BytePayload.id(ADD_PERK), buf));
     }
 }

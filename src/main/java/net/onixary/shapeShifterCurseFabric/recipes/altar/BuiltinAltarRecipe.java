@@ -175,46 +175,46 @@ public class BuiltinAltarRecipe extends AltarRecipe {
 
     @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
-        return RecipeSerializerRegister.BUILTIN_ALTER_RECIPE;
+        return RecipeSerializerRegister.BUILTIN_Altar_RECIPE;
     }
 
-    public static class Serializer implements RecipeSerializer<BuiltinAlterRecipe> {
+    public static class Serializer implements RecipeSerializer<BuiltinAltarRecipe> {
         /** JSON：只存 recipe_config_id，decode 时从 BARecipeConfigMap 查运行时配置。 */
-        private static final MapCodec<BuiltinAlterRecipe> CODEC = RecordCodecBuilder.mapCodec(
+        private static final MapCodec<BuiltinAltarRecipe> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                 ResourceLocation.CODEC.fieldOf("recipe_config_id").forGetter(r -> r.configId)
-            ).apply(instance, BuiltinAlterRecipe::fromConfigId)
+            ).apply(instance, BuiltinAltarRecipe::fromConfigId)
         );
 
-        private static final StreamCodec<RegistryFriendlyByteBuf, BuiltinAlterRecipe> STREAM_CODEC =
+        private static final StreamCodec<RegistryFriendlyByteBuf, BuiltinAltarRecipe> STREAM_CODEC =
             StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
         @Override
-        public @NotNull MapCodec<BuiltinAlterRecipe> codec() {
+        public @NotNull MapCodec<BuiltinAltarRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public @NotNull StreamCodec<RegistryFriendlyByteBuf, BuiltinAlterRecipe> streamCodec() {
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, BuiltinAltarRecipe> streamCodec() {
             return STREAM_CODEC;
         }
 
-        private static BuiltinAlterRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
+        private static BuiltinAltarRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
             ResourceLocation configId = buf.readResourceLocation();
             return fromConfigId(configId);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf buf, BuiltinAlterRecipe alterRecipe) {
-            buf.writeResourceLocation(alterRecipe.configId);
+        private static void toNetwork(RegistryFriendlyByteBuf buf, BuiltinAltarRecipe AltarRecipe) {
+            buf.writeResourceLocation(AltarRecipe.configId);
         }
     }
 
     /** 从配置 id 查运行时配置构造配方（配置未注册则抛错）。 */
-    private static BuiltinAlterRecipe fromConfigId(ResourceLocation configId) {
+    private static BuiltinAltarRecipe fromConfigId(ResourceLocation configId) {
         BARecipeConfig recipeConfig = BARecipeConfig.get(configId);
         if (recipeConfig == null) {
             throw new JsonSyntaxException("Unknown recipe_config_id: " + configId);
         }
-        return new BuiltinAlterRecipe(configId, recipeConfig);
+        return new BuiltinAltarRecipe(configId, recipeConfig);
     }
 }

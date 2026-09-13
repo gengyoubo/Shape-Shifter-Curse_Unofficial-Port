@@ -132,11 +132,11 @@ public class AltarShapedRecipe extends AltarRecipe {
 
     @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
-        return RecipeSerializerRegister.ALTER_SHAPED_RECIPE;
+        return RecipeSerializerRegister.Altar_SHAPED_RECIPE;
     }
 
-    public static class Serializer implements RecipeSerializer<AlterShapedRecipe> {
-        private static final MapCodec<AlterShapedRecipe> CODEC = RecordCodecBuilder.mapCodec(
+    public static class Serializer implements RecipeSerializer<AltarShapedRecipe> {
+        private static final MapCodec<AltarShapedRecipe> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                 ShapedRecipePattern.MAP_CODEC.forGetter(r -> r.pattern),
                 ItemStack.STRICT_CODEC.fieldOf("result").forGetter(r -> r.output),
@@ -145,24 +145,24 @@ public class AltarShapedRecipe extends AltarRecipe {
                 Codec.INT.optionalFieldOf("fuel_cost", 1).forGetter(r -> r.fuelCostPerTick),
                 ResourceLocation.CODEC.optionalFieldOf("require_advancement").forGetter(r -> Optional.ofNullable(r.requireAdvancement))
             ).apply(instance, (pattern, output, catalyst, time, fuelCost, requireAdvancement) ->
-                new AlterShapedRecipe(pattern, output, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
+                new AltarShapedRecipe(pattern, output, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
         );
 
-        private static final StreamCodec<RegistryFriendlyByteBuf, AlterShapedRecipe> STREAM_CODEC = StreamCodec.of(
+        private static final StreamCodec<RegistryFriendlyByteBuf, AltarShapedRecipe> STREAM_CODEC = StreamCodec.of(
             Serializer::toNetwork, Serializer::fromNetwork
         );
 
         @Override
-        public @NotNull MapCodec<AlterShapedRecipe> codec() {
+        public @NotNull MapCodec<AltarShapedRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AlterShapedRecipe> streamCodec() {
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AltarShapedRecipe> streamCodec() {
             return STREAM_CODEC;
         }
 
-        private static AlterShapedRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
+        private static AltarShapedRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
             Ingredient catalyst = null;
             if (buf.readBoolean()) {
                 catalyst = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
@@ -178,7 +178,7 @@ public class AltarShapedRecipe extends AltarRecipe {
             return new AltarShapedRecipe(pattern, output, catalyst, time, fuelCost, requireAdvancement);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf buf, AlterShapedRecipe r) {
+        private static void toNetwork(RegistryFriendlyByteBuf buf, AltarShapedRecipe r) {
             if (r.catalyst != null) {
                 buf.writeBoolean(true);
                 Ingredient.CONTENTS_STREAM_CODEC.encode(buf, r.catalyst);

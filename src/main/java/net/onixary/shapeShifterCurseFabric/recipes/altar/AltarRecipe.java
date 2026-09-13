@@ -3,7 +3,9 @@ package net.onixary.shapeShifterCurseFabric.recipes.altar;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.onixary.shapeShifterCurseFabric.recipes.RecipeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +16,7 @@ public abstract class AltarRecipe implements Recipe<RecipeInput> {
 
     @Override
     public @NotNull RecipeType<?> getType() {
-        return RecipeUtils.ALTER_RECIPE;
+        return RecipeUtils.Altar_RECIPE;
     }
 
     public abstract int recipeTime();

@@ -15,7 +15,7 @@ public class NormalPerk implements IPerk {
     public final List<ResourceLocation> powerRemove = new ArrayList<>();
 
     public boolean repeatable = false;
-    public BiConsumer<PlayerEntity, IForm> onGainFunc = null;
+    public BiConsumer<Player, IForm> onGainFunc = null;
 
     public NormalPerk(ResourceLocation perkID) {
         this.perkID = perkID;
@@ -40,7 +40,7 @@ public class NormalPerk implements IPerk {
     }
 
     @Override
-    public void onGain(PlayerEntity player, IForm form) {
+    public void onGain(Player player, IForm form) {
         if (onGainFunc != null) {
             onGainFunc.accept(player, form);
         } else {
@@ -53,7 +53,7 @@ public class NormalPerk implements IPerk {
         return repeatable;
     }
 
-    public NormalPerk Repeat(BiConsumer<PlayerEntity, IForm> onGainFunc) {
+    public NormalPerk Repeat(BiConsumer<Player, IForm> onGainFunc) {
         if (onGainFunc == null) {
             repeatable = false;
         } else {

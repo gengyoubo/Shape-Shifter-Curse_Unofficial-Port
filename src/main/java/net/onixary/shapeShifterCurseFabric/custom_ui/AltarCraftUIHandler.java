@@ -13,22 +13,22 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.onixary.shapeShifterCurseFabric.blocks.block_entity.AltarBlockEntity;
 import net.onixary.shapeShifterCurseFabric.custom_ui.ui_part.AltarOutputSlot;
-import net.onixary.shapeShifterCurseFabric.recipes.alter.AlterRecipe;
+import net.onixary.shapeShifterCurseFabric.recipes.altar.AltarRecipe;
 import org.jetbrains.annotations.NotNull;
 
-public class AltarCraftUIHandler extends AbstractRecipeScreenHandler<SidedInventory> {
-    public final PlayerInventory playerInventory;
-    public final Inventory altarBlockEntity;
-    public final ScreenHandlerContext context;
-    public final PlayerEntity player;
-    public final World world;
-    public final PropertyDelegate propertyDelegate;
+public class AltarCraftUIHandler extends RecipeBookMenu<RecipeInput, AltarRecipe> {
+    public final Inventory playerInventory;
+    public final Container altarBlockEntity;
+    public final ContainerLevelAccess context;
+    public final Player player;
+    public final Level world;
+    public final ContainerData propertyDelegate;
 
     public static AltarCraftUIHandler createMenu(int i, Inventory inventory) {
         return new AltarCraftUIHandler(RegMenuType.AltarCraftUI, i, inventory, new SimpleContainer(11), ContainerLevelAccess.NULL, new SimpleContainerData(4));
     }
 
-    public AltarCraftUIHandler(ScreenHandlerType<?> screenHandlerType, int syncId, PlayerInventory playerInventory, Inventory altarBlockEntity, ScreenHandlerContext context, PropertyDelegate propertyDelegate) {
+    public AltarCraftUIHandler(MenuType<?> screenHandlerType, int syncId, Inventory playerInventory, Container altarBlockEntity, ContainerLevelAccess context, ContainerData propertyDelegate) {
         super(screenHandlerType, syncId);
         this.playerInventory = playerInventory;
         this.altarBlockEntity = altarBlockEntity;
@@ -77,9 +77,10 @@ public class AltarCraftUIHandler extends AbstractRecipeScreenHandler<SidedInvent
     }
 
     @Override
-    public boolean matches(RecipeHolder<AlterRecipe> recipeHolder) {
+    public boolean recipeMatches(RecipeHolder<AltarRecipe> recipeHolder) {
         if (this.altarBlockEntity instanceof AltarBlockEntity realAltar) {
-            return recipeHolder.matches(realAltar, world);
+            // 用 craftInput()（含 slot 9 燃料/催化剂槽）而不是把 BlockEntity 本身当 RecipeInput
+            return recipeHolder.value().matches(realAltar.craftInput(), world);
         }
         return false;
     }

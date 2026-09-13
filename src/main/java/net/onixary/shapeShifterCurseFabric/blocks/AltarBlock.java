@@ -21,13 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 
 // 渲染先用透明方案吧 BlockEntity类方块由BlockEntity动态渲染
-public class AltarBlock extends BlockWithEntity {
-    protected AltarBlock(Settings settings) {
+public class AltarBlock extends BaseEntityBlock {
+    protected AltarBlock(Properties settings) {
         super(settings);
     }
 
     @Override
-    public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new AltarBlockEntity(pos, state);
     }
 
@@ -45,8 +45,8 @@ public class AltarBlock extends BlockWithEntity {
     protected void openScreen(Level world, BlockPos pos, Player player) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof AltarBlockEntity altarBlockEntity) {
-            altarBlockEntity.lastUser = player.getUuid();
-            player.openHandledScreen(altarBlockEntity);
+            altarBlockEntity.lastUser = player.getUUID();
+            player.openMenu(altarBlockEntity);
         }
     }
 
@@ -57,20 +57,15 @@ public class AltarBlock extends BlockWithEntity {
 
     // 1.21 BaseEntityBlock 要求实现抽象的 codec()（用于 Block 的注册/网络同步）
     @Override
-    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return checkType(world, type, RegCustomBlock.ALTER_BLOCK_ENTITY);
+    protected @NotNull MapCodec<AltarBlock> codec() {
+        return Block.simpleCodec(AltarBlock::new);
     }
 
-    @Nullable
-    public static <T extends BlockEntity> BlockEntityTicker<T> checkType(World world, BlockEntityType<T> givenType, BlockEntityType<? extends AltarBlockEntity> expectedType) {
-        return world.isClient ? null : checkType(givenType, expectedType, (world1, pos, state, blockEntity) -> {
-            blockEntity.tick(world1, pos, state, blockEntity);
-        });
-    }
-
+    // 1.21.1 mojmap 里对应的工具是 BaseEntityBlock.createTickerHelper（原先那个本地 checkType 是 1.20.1 yarn 的
+    // BlockWithEntity.checkType 遗骸，两个重载会互相打转，编译不过）
     @Override
     public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
-        return world.isClientSide ? null : createTickerHelper(type, RegCustomBlock.ALTER_BLOCK_ENTITY, (world1, pos, blockState, blockEntity) -> blockEntity.tick(world1, pos, blockState, blockEntity));
+        return world.isClientSide ? null : createTickerHelper(type, RegCustomBlock.Altar_BLOCK_ENTITY, (world1, pos, blockState, blockEntity) -> blockEntity.tick(world1, pos, blockState, blockEntity));
     }
 
     @Override
@@ -78,8 +73,8 @@ public class AltarBlock extends BlockWithEntity {
         if (!state.is(newState.getBlock())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof AltarBlockEntity altarBlockEntity) {
-                if (world instanceof ServerWorld) {
-                    ItemScatterer.spawn(world, pos, altarBlockEntity);
+                if (world instanceof ServerLevel) {
+                    Containers.dropContents(world, pos, altarBlockEntity);
                 }
             }
             super.onRemove(state, world, pos, newState, moved);

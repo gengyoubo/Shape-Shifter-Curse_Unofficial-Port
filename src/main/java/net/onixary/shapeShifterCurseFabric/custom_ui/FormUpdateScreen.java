@@ -1,10 +1,15 @@
 package net.onixary.shapeShifterCurseFabric.custom_ui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
+import net.onixary.shapeShifterCurseFabric.custom_ui.ui_part.ScaleScrollTextWidget;
 import net.onixary.shapeShifterCurseFabric.custom_ui.ui_part.WidgetEXUtils;
 import net.onixary.shapeShifterCurseFabric.perk.PerkTree;
 import net.onixary.shapeShifterCurseFabric.perk.PerkUtils;
@@ -20,9 +25,9 @@ import java.util.Objects;
 // 标记 UNTESTED 代表这个函数没测试 测试完了就删(估计最后得有一堆没测试函数 还是标一下大概率炸的函数吧)
 
 public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX {
-    public static final Identifier LABEL_GAINED = ShapeShifterCurseFabric.identifier("textures/perk/system/gained.png");
-    public static final Identifier LABEL_SELECT = ShapeShifterCurseFabric.identifier("textures/perk/system/select.png");
-    public static final Identifier LABEL_SELECTED = ShapeShifterCurseFabric.identifier("textures/perk/system/selected.png");
+    public static final ResourceLocation LABEL_GAINED = ShapeShifterCurseFabric.identifier("textures/perk/system/gained.png");
+    public static final ResourceLocation LABEL_SELECT = ShapeShifterCurseFabric.identifier("textures/perk/system/select.png");
+    public static final ResourceLocation LABEL_SELECTED = ShapeShifterCurseFabric.identifier("textures/perk/system/selected.png");
 
     public boolean isLocked;
     public @NotNull PerkTree perkTree;
@@ -61,9 +66,9 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     public static final int NodeSelectRectHeight = 18;
 
     // Widgets
-    public TextWidget PerkNameWidget;
+    public StringWidget PerkNameWidget;
     public ScaleScrollTextWidget PerkDescWidget;
-    public ButtonWidget AcquirePerkButton;
+    public Button AcquirePerkButton;
 
     @Override
     public WidgetEXUtils.WidgetRect getRect() {
@@ -87,18 +92,18 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     public void init() {
         int InfoPosX = this.width / 2 + nodeWindowWidth / 2 + 10;
         int InfoPosY = this.height / 2 - nodeWindowHeight / 2;
-        this.PerkNameWidget = new TextWidget(InfoPosX, InfoPosY, 100, 9, Text.literal(""), this.textRenderer);
-        this.PerkDescWidget = new ScaleScrollTextWidget(InfoPosX, InfoPosY + 12, 100, 160, 1.0f, Text.literal(""), this.textRenderer);
+        this.PerkNameWidget = new StringWidget(InfoPosX, InfoPosY, 100, 9, Component.literal(""), this.font);
+        this.PerkDescWidget = new ScaleScrollTextWidget(InfoPosX, InfoPosY + 12, 100, 160, 1.0f, Component.literal(""), this.font);
         this.PerkDescWidget.setEnableScrollableIconRender(true);
         this.WidgetList.add(this.PerkDescWidget);
-        this.AcquirePerkButton = ButtonWidget.builder(Text.literal("GET"), button -> {
+        this.AcquirePerkButton = Button.builder(Component.literal("GET"), button -> {
             if (this.nowSelectNode != null) {
-                PerkUtils.addPerk(MinecraftClient.getInstance().player, this.perkTree.getID(), this.nowSelectNode.perkID);
+                PerkUtils.addPerk(Minecraft.getInstance().player, this.perkTree.getID(), this.nowSelectNode.perkID());
             }
-        }).position(InfoPosX + 20, InfoPosY + 180).size(60, 10).build();
-        this.addDrawableChild(this.PerkNameWidget);
-        this.addDrawableChild(this.PerkDescWidget);
-        this.addDrawableChild(this.AcquirePerkButton);
+        }).pos(InfoPosX + 20, InfoPosY + 180).size(60, 10).build();
+        this.addRenderableWidget(this.PerkNameWidget);
+        this.addRenderableWidget(this.PerkDescWidget);
+        this.addRenderableWidget(this.AcquirePerkButton);
         super.init();
     }
 
@@ -123,14 +128,14 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double mouseZ) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double mouseZ, double g) {
         this.onScrollWidget(mouseX, mouseY, mouseZ);
         this.NodeScreenMouseScrollHandler((int)mouseX, (int)mouseY, mouseZ);
-        return super.mouseScrolled(mouseX, mouseY, mouseZ);
+        return super.mouseScrolled(mouseX, mouseY, mouseZ, g);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         nodeWindowX = this.width / 2 - nodeWindowWidth / 2;
         nodeWindowY = this.height / 2 - nodeWindowHeight / 2;
         cameraCenter = new Vector2i(nodeWindowX + nodeWindowWidth / 2, nodeWindowY + nodeWindowHeight / 2);
@@ -175,17 +180,17 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         if (icon == null) {
             icon = RegPerks.FALLBACK_PERK_ICON;
         }
-        int virtualNodeX = nodeBaseX + posXPerTier * perkNode.tier;
-        int virtualNodeY = perkNode.y;
+        int virtualNodeX = nodeBaseX + posXPerTier * perkNode.tier();
+        int virtualNodeY = perkNode.y();
         int NodePosX = nodeCenter.x + virtualNodeX;
         int NodePosY = nodeCenter.y + virtualNodeY;
         int left = virtualNodeX + NodeSelectStartX;
         int top = virtualNodeY + NodeSelectStartY;
         if (playerGainedPerk != null && playerGainedPerk.contains(perkNode.perkID())) {
-            context.drawTexture(LABEL_GAINED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+            context.blit(LABEL_GAINED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
         }
         if (perkNode == this.nowSelectNode) {
-            context.drawTexture(LABEL_SELECTED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+            context.blit(LABEL_SELECTED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
         }
         if (mouseX >= left && mouseX < left + NodeSelectRectWidth && mouseY >= top && mouseY < top + NodeSelectRectHeight) {
             context.blit(LABEL_SELECT, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
@@ -279,16 +284,16 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
 
     public void onNodeSelect() {
         try {
-            MinecraftClient.getInstance().player.sendMessage(Text.literal("Node Selected: " + this.nowSelectNode.perkID.toString()), false);
+            Minecraft.getInstance().player.sendSystemMessage(Component.literal("Node Selected: " + this.nowSelectNode.perkID().toString()));
         } catch (Exception e) {
-            MinecraftClient.getInstance().player.sendMessage(Text.literal("No Node Selected"), false);
+            Minecraft.getInstance().player.sendSystemMessage(Component.literal("No Node Selected"));
         }
         if (this.nowSelectNode != null) {
-            this.PerkNameWidget.setMessage(RegPerks.getPerkName(this.nowSelectNode.perkID));
-            this.PerkDescWidget.reloadText(RegPerks.getPerkDescription(this.nowSelectNode.perkID));
+            this.PerkNameWidget.setMessage(RegPerks.getPerkName(this.nowSelectNode.perkID()));
+            this.PerkDescWidget.reloadText(RegPerks.getPerkDescription(this.nowSelectNode.perkID()));
         } else {
-            this.PerkNameWidget.setMessage(Text.literal(""));
-            this.PerkDescWidget.reloadText(Text.literal(""));
+            this.PerkNameWidget.setMessage(Component.literal(""));
+            this.PerkDescWidget.reloadText(Component.literal(""));
         }
     }
 }

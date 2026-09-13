@@ -9,7 +9,7 @@ import net.onixary.shapeShifterCurseFabric.blocks.block_entity.AltarBlockEntity;
 
 import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID;
 
-public class AltarCraftUI extends HandledScreen<AltarCraftUIHandler> {
+public class AltarCraftUI extends AbstractContainerScreen<AltarCraftUIHandler> {
 
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(MOD_ID,"textures/gui/altar_craft_ui.png");
     private static final int WIDTH = 176;
@@ -43,8 +43,8 @@ public class AltarCraftUI extends HandledScreen<AltarCraftUIHandler> {
         context.blit(BACKGROUND, baseX, baseY, 0, 0, WIDTH, HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     }
 
-    public void drawBar(DrawContext context) {
-        AlterCraftUIHandler uiHandler = this.getScreenHandler();
+    public void drawBar(GuiGraphics context) {
+        AltarCraftUIHandler uiHandler = this.getMenu();
         int maxProgress = uiHandler.getMaxProgress();
         if (maxProgress > 0) {
             // clamp 到 [0,24]：防止 ratio>1 时 ProcessWidth>24，blit 采样 u1=(176+w)/200>1.0 越过纹理右缘 wrap（视觉"反转到左侧"）

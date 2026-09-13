@@ -1,6 +1,6 @@
 package net.onixary.shapeShifterCurseFabric.perk;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.PlayerFormComponent;
@@ -14,14 +14,14 @@ public class RegPerks {
     public static final HashMap<ResourceLocation, IPerk> PerkRegistry = new HashMap<>();
     public static final HashMap<ResourceLocation, ResourceLocation> PerkIconRegistry = new HashMap<>();
     public static final HashMap<ResourceLocation, PerkTree> PerkTreeRegistry = new HashMap<>();
-    public static final HashMap<Identifier, Text> PerkTreeNameRegistry = new HashMap<>();
-    public static final HashMap<Identifier, Text> PerkNameRegistry = new HashMap<>();
-    public static final HashMap<Identifier, Text> PerkDescriptionRegistry = new HashMap<>();
+    public static final HashMap<ResourceLocation, Component> PerkTreeNameRegistry = new HashMap<>();
+    public static final HashMap<ResourceLocation, Component> PerkNameRegistry = new HashMap<>();
+    public static final HashMap<ResourceLocation, Component> PerkDescriptionRegistry = new HashMap<>();
 
     public static final ResourceLocation FALLBACK_PERK_ICON = ShapeShifterCurseFabric.identifier("textures/perk/fallback.png");
-    public static final Identifier EMPTY_PERK_TREE = registerPerkTree(new PerkTree(ShapeShifterCurseFabric.identifier("empty")));
+    public static final ResourceLocation EMPTY_PERK_TREE = registerPerkTree(new PerkTree(ShapeShifterCurseFabric.identifier("empty")));
 
-    public static final Identifier P_FoxRoot = registerPerk(
+    public static final ResourceLocation P_FoxRoot = registerPerk(
             new NormalPerk(ShapeShifterCurseFabric.identifier("fox_root"))
     );
 
@@ -37,17 +37,17 @@ public class RegPerks {
                     .removePower()
     );
 
-    public static final Identifier P_FireArrowPlusL1 = registerPerk(
+    public static final ResourceLocation P_FireArrowPlusL1 = registerPerk(
             new NormalPerk(ShapeShifterCurseFabric.identifier("fire_arrow_plus_1"))
                     .addPower()
                     .removePower()
     );
 
-    public static final Identifier P_Reset = registerPerk(
+    public static final ResourceLocation P_Reset = registerPerk(
             new NormalPerk(ShapeShifterCurseFabric.identifier("reset"))
                     .Repeat(((player, form) -> {
-                        Identifier perkTreeID = PerkUtils.getPlayerNowPerkTreeID(player);
-                        List<Identifier> perks = PerkUtils.getPlayerPerks(player, perkTreeID);
+                        ResourceLocation perkTreeID = PerkUtils.getPlayerNowPerkTreeID(player);
+                        List<ResourceLocation> perks = PerkUtils.getPlayerPerks(player, perkTreeID);
                         if (perks != null) {
                             perks.clear();
                             PerkUtils.removeInValidPerk(player, perkTreeID);
@@ -101,17 +101,17 @@ public class RegPerks {
     }
 
     // TODO 需要加一个注册函数
-    public static @NotNull Text getPerkName(Identifier perkID) {
+    public static @NotNull Component getPerkName(ResourceLocation perkID) {
         if (PerkNameRegistry.containsKey(perkID)) {
             return PerkNameRegistry.get(perkID);
         }
-        return Text.translatable("ssc_perk." + perkID.getNamespace() + "." + perkID.getPath() + ".name");
+        return Component.translatable("ssc_perk." + perkID.getNamespace() + "." + perkID.getPath() + ".name");
     }
 
-    public static @NotNull Text getPerkDescription(Identifier perkID) {
+    public static @NotNull Component getPerkDescription(ResourceLocation perkID) {
         if (PerkDescriptionRegistry.containsKey(perkID)) {
             return PerkDescriptionRegistry.get(perkID);
         }
-        return Text.translatable("ssc_perk." + perkID.getNamespace() + "." + perkID.getPath() + ".description");
+        return Component.translatable("ssc_perk." + perkID.getNamespace() + "." + perkID.getPath() + ".description");
     }
 }

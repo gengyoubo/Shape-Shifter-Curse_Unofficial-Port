@@ -25,16 +25,19 @@ import net.onixary.shapeShifterCurseFabric.custom_ui.RegMenuType;
 import net.onixary.shapeShifterCurseFabric.items.RegCustomItem;
 import net.onixary.shapeShifterCurseFabric.recipes.RecipeUtils;
 import net.onixary.shapeShifterCurseFabric.recipes.altar.AltarRecipe;
+import net.onixary.shapeShifterCurseFabric.recipes.altar.AltarRecipeInput;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-public class AltarBlockEntity extends LockableContainerBlockEntity implements SidedInventory, RecipeUnlocker, RecipeInputProvider {
+public class AltarBlockEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeCraftingHolder, StackedContentsCompatible {
     // 进度锁是个不错的设计 能降低难度(毕竟之前做限制进度使用得上对应阶段的材料 有些材料是真不好量产 有这个就能用便宜材料了)
     public UUID lastUser;
     public AltarRecipe nowRecipe;
+    public RecipeHolder<?> nowRecipeHolder;
     public static final int maxFuel = 102400;
     // data slot 网络用 16-bit(short) 传输，值域 [-32768,32767]；而 fuelTime 可累积到 102400 超上限，
     // 超过 32767 会被 writeShort 截断成负值 → 客户端燃料条"消失-重涨"。
@@ -55,7 +58,7 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
 
     public static final HashMap<Item, Integer> fuelTimeMap = new HashMap<>();
 
-    private final RecipeManager.MatchGetter<SidedInventory, ? extends AltarRecipe> matchGetter;
+    private final RecipeManager.CachedCheck<RecipeInput, AltarRecipe> matchGetter;
 
     static {
         fuelTimeMap.put(RegCustomItem.UNTREATED_MOONDUST, 800);
@@ -70,9 +73,9 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
     }
 
     public AltarBlockEntity(BlockPos blockPos, BlockState blockState) {
-        super(RegCustomBlock.ALTER_BLOCK_ENTITY, blockPos, blockState);
+        super(RegCustomBlock.Altar_BLOCK_ENTITY, blockPos, blockState);
         this.inventory = NonNullList.withSize(11, ItemStack.EMPTY);
-        this.matchGetter = RecipeManager.createCheck(RecipeUtils.ALTER_RECIPE);
+        this.matchGetter = RecipeManager.createCheck(RecipeUtils.Altar_RECIPE);
         this.propertyDelegate = new ContainerData() {
             public int get(int index) {
                 switch (index) {
@@ -83,7 +86,10 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
                         return AltarBlockEntity.this.totalProgress;
                     }
                     case 2 -> {
-                        return AltarBlockEntity.this.fuelTime;
+                        return AltarBlockEntity.this.fuelTime & 0xFFFF;
+                    }
+                    case 3 -> {
+                        return (AltarBlockEntity.this.fuelTime >>> 16) & 0xFFFF;
                     }
                     default -> {
                         return 0;
@@ -95,7 +101,8 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
                 switch (index) {
                     case 0 -> AltarBlockEntity.this.progress = value;
                     case 1 -> AltarBlockEntity.this.totalProgress = value;
-                    case 2 -> AltarBlockEntity.this.fuelTime = value;
+                    case 2 -> AltarBlockEntity.this.fuelTime = (AltarBlockEntity.this.fuelTime & 0xFFFF0000) | (value & 0xFFFF);
+                    case 3 -> AltarBlockEntity.this.fuelTime = (AltarBlockEntity.this.fuelTime & 0x0000FFFF) | ((value & 0xFFFF) << 16);
                 }
 
             }
@@ -111,13 +118,13 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
     }
 
     @Override
-    protected Text getDefaultName() {
-        return Text.translatable("block.shape-shifter-curse.altar");
+    protected Component getDefaultName() {
+        return Component.translatable("block.shape-shifter-curse.altar");
     }
 
     @Override
-    protected ScreenHandler createMenu(int syncId, PlayerInventory playerInventory) {
-        return new AltarCraftUIHandler(RegMenuType.AltarCraftUI, syncId, playerInventory, this, ScreenHandlerContext.EMPTY, this.propertyDelegate);
+    protected AbstractContainerMenu createMenu(int syncId, Inventory playerInventory) {
+        return new AltarCraftUIHandler(RegMenuType.AltarCraftUI, syncId, playerInventory, this, ContainerLevelAccess.NULL, this.propertyDelegate);
     }
 
     @Override
@@ -164,10 +171,10 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
 
     // 构造包含燃料/催化剂槽(slot 9)的 RecipeInput 给 Recipe 匹配。
     // 1.21.1 的 CraftingInput.of 会按非空网格裁剪、丢弃 slot 9，使 matches().getItem(9) 越界；
-    // 故改用自定义 AlterRecipeInput 线性映射 inventory 0-9（0-8 键材 + slot 9 燃料/催化剂）。
-    // AlterBlockEntity 自身不 implements RecipeInput，避免与 WorldlyContainer 的 getItem/isEmpty 双接口在 remap 时二义。
+    // 故改用自定义 AltarRecipeInput 线性映射 inventory 0-9（0-8 键材 + slot 9 燃料/催化剂）。
+    // AltarBlockEntity 自身不 implements RecipeInput，避免与 WorldlyContainer 的 getItem/isEmpty 双接口在 remap 时二义。
     public RecipeInput craftInput() {
-        return new AlterRecipeInput(this.inventory);
+        return new AltarRecipeInput(this.inventory);
     }
 
     @Override
@@ -246,9 +253,12 @@ public class AltarBlockEntity extends LockableContainerBlockEntity implements Si
             this.nowRecipeHolder = null;
             this.totalProgress = 0;
         }
-        Optional<? extends AltarRecipe> altarRecipe = this.matchGetter.getFirstMatch(this, world);
+        // 必须传 craftInput()（含 slot 9 燃料/催化剂槽的线性 RecipeInput），不能把 BlockEntity 本身当 RecipeInput；
+        // 且 getRecipeFor 返回的是 RecipeHolder，配方本体要 .value()
+        var altarRecipe = this.matchGetter.getRecipeFor(this.craftInput(), world);
         if (altarRecipe.isPresent()) {
-            this.nowRecipe = altarRecipe.get();
+            this.nowRecipe = altarRecipe.get().value();
+            this.nowRecipeHolder = altarRecipe.get();
             this.totalProgress = this.nowRecipe.recipeTime();
             if (!(world != null && this.canCraftRecipe(world.registryAccess()))) {
                 this.nowRecipe = null;

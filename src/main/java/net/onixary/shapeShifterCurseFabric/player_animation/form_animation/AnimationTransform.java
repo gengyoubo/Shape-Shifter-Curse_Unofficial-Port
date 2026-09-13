@@ -53,6 +53,6 @@ public class AnimationTransform {
         anim_on_transform_default = new AnimationHolder(ResourceLocation.fromNamespaceAndPath(MOD_ID, "player_on_transform"), true);
         anim_on_transform_normal_to_feral = new AnimationHolder(ResourceLocation.fromNamespaceAndPath(MOD_ID, "player_on_transform_normal_to_feral"), true);
         anim_on_transform_feral_to_normal = new AnimationHolder(ResourceLocation.fromNamespaceAndPath(MOD_ID, "player_on_transform_feral_to_normal"), true);
-        anim_on_transform_feral_to_feral = new AnimationHolder(new Identifier(MOD_ID, "player_on_transform_feral_to_feral"), true);
+        anim_on_transform_feral_to_feral = new AnimationHolder(ResourceLocation.fromNamespaceAndPath(MOD_ID, "player_on_transform_feral_to_feral"), true);
     }
 }

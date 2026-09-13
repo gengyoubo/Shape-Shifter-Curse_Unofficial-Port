@@ -120,21 +120,21 @@ public class AltarShapelessRecipe extends AltarRecipe {
 
     @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
-        return RecipeSerializerRegister.ALTER_SHAPELESS_RECIPE;
+        return RecipeSerializerRegister.Altar_SHAPELESS_RECIPE;
     }
 
-    public static class Serializer implements RecipeSerializer<AlterShapelessRecipe> {
-        private static final MapCodec<AlterShapelessRecipe> CODEC = RecordCodecBuilder.mapCodec(
+    public static class Serializer implements RecipeSerializer<AltarShapelessRecipe> {
+        private static final MapCodec<AltarShapelessRecipe> CODEC = RecordCodecBuilder.mapCodec(
             instance -> instance.group(
                 ItemStack.STRICT_CODEC.fieldOf("result").forGetter(r -> r.output),
                 Ingredient.CODEC_NONEMPTY.listOf().fieldOf("ingredients").flatXmap(
                     list -> {
                         Ingredient[] arr = list.stream().filter(i -> !i.isEmpty()).toArray(Ingredient[]::new);
                         if (arr.length == 0) {
-                            return DataResult.error(() -> "No ingredients for alter shapeless recipe");
+                            return DataResult.error(() -> "No ingredients for Altar shapeless recipe");
                         }
                         if (arr.length > 9) {
-                            return DataResult.error(() -> "Too many ingredients for alter shapeless recipe");
+                            return DataResult.error(() -> "Too many ingredients for Altar shapeless recipe");
                         }
                         return DataResult.success(NonNullList.of(Ingredient.EMPTY, arr));
                     }, DataResult::success)
@@ -144,24 +144,24 @@ public class AltarShapelessRecipe extends AltarRecipe {
                 Codec.INT.optionalFieldOf("fuel_cost", 1).forGetter(r -> r.fuelCostPerTick),
                 ResourceLocation.CODEC.optionalFieldOf("require_advancement").forGetter(r -> Optional.ofNullable(r.requireAdvancement))
             ).apply(instance, (output, input, catalyst, time, fuelCost, requireAdvancement) ->
-                new AlterShapelessRecipe(output, input, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
+                new AltarShapelessRecipe(output, input, catalyst.orElse(null), time, fuelCost, requireAdvancement.orElse(null)))
         );
 
-        private static final StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> STREAM_CODEC = StreamCodec.of(
+        private static final StreamCodec<RegistryFriendlyByteBuf, AltarShapelessRecipe> STREAM_CODEC = StreamCodec.of(
             Serializer::toNetwork, Serializer::fromNetwork
         );
 
         @Override
-        public @NotNull MapCodec<AlterShapelessRecipe> codec() {
+        public @NotNull MapCodec<AltarShapelessRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AlterShapelessRecipe> streamCodec() {
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, AltarShapelessRecipe> streamCodec() {
             return STREAM_CODEC;
         }
 
-        private static AlterShapelessRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
+        private static AltarShapelessRecipe fromNetwork(RegistryFriendlyByteBuf buf) {
             Ingredient catalyst = null;
             if (buf.readBoolean()) {
                 catalyst = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
@@ -176,10 +176,10 @@ public class AltarShapelessRecipe extends AltarRecipe {
             ItemStack output = ItemStack.STREAM_CODEC.decode(buf);
             int time = buf.readVarInt();
             int fuelCost = buf.readVarInt();
-            return new AlterShapelessRecipe(output, list, catalyst, time, fuelCost, requireAdvancement);
+            return new AltarShapelessRecipe(output, list, catalyst, time, fuelCost, requireAdvancement);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf buf, AlterShapelessRecipe r) {
+        private static void toNetwork(RegistryFriendlyByteBuf buf, AltarShapelessRecipe r) {
             if (r.catalyst != null) {
                 buf.writeBoolean(true);
                 Ingredient.CONTENTS_STREAM_CODEC.encode(buf, r.catalyst);

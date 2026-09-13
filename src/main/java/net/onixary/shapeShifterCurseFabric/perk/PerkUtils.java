@@ -4,7 +4,6 @@ import com.google.common.base.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.onixary.shapeShifterCurseFabric.networking.ModPacketsC2S;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2C;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.PlayerFormComponent;
 import org.jetbrains.annotations.Nullable;
@@ -112,17 +111,17 @@ public class PerkUtils {
         }
     }
 
-    public static Identifier getPlayerNowPerkTreeID(PlayerEntity player) {
+    public static ResourceLocation getPlayerNowPerkTreeID(Player player) {
         PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
         return component.nowPerkTree;
     }
 
-    public static @Nullable PerkTree getPlayerNowPerkTree(PlayerEntity player) {
-        Identifier perkTreeID = getPlayerNowPerkTreeID(player);
+    public static @Nullable PerkTree getPlayerNowPerkTree(Player player) {
+        ResourceLocation perkTreeID = getPlayerNowPerkTreeID(player);
         return RegPerks.getPerkTree(perkTreeID);
     }
 
-    public static void setPlayerNowPerkTreeID(PlayerEntity player, Identifier perkTreeID) {
+    public static void setPlayerNowPerkTreeID(Player player, ResourceLocation perkTreeID) {
         PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
         component.nowPerkTree = perkTreeID;
         component.sync();

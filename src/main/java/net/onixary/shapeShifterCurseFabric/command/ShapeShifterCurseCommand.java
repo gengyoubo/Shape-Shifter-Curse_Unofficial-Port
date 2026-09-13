@@ -23,7 +23,6 @@ import net.minecraft.world.phys.Vec3;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.additional_power.CustomWaterBreathingPower;
 import net.onixary.shapeShifterCurseFabric.cursed_moon.CursedMoon;
-import net.onixary.shapeShifterCurseFabric.entity.projectile.WebBullet;
 import net.onixary.shapeShifterCurseFabric.mana.RegManaComponent;
 import net.onixary.shapeShifterCurseFabric.minion.RegPlayerMinionComponent;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2CServer;
@@ -47,6 +46,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -582,8 +582,8 @@ public class ShapeShifterCurseCommand {
             return 0;
         }
         try {
-            List<Identifier> PerkTrees = new ArrayList<>(RegPerks.PerkTreeRegistry.keySet());
-            Identifier nowPerkTree = PerkUtils.getPlayerNowPerkTreeID(player);
+            List<ResourceLocation> PerkTrees = new ArrayList<>(RegPerks.PerkTreeRegistry.keySet());
+            ResourceLocation nowPerkTree = PerkUtils.getPlayerNowPerkTreeID(player);
             int index = PerkTrees.indexOf(nowPerkTree);
             if (index == -1) {
                 index = 0;

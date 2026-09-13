@@ -8,6 +8,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
+import net.onixary.shapeShifterCurseFabric.perk.RegPerks;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
 import net.onixary.shapeShifterCurseFabric.player_form.RegPlayerForms;
 import net.onixary.shapeShifterCurseFabric.util.InitialFormUtils;
@@ -45,7 +46,7 @@ public class PlayerFormComponent implements AutoSyncedComponent {
     public float instinctRate = 0.0f;
     public HashMap<ResourceLocation, InstinctUtils.InstinctEffect> instinctEffects = new HashMap<>();
 
-    public Identifier nowPerkTree = RegPerks.EMPTY_PERK_TREE;
+    public ResourceLocation nowPerkTree = RegPerks.EMPTY_PERK_TREE;
     public HashMap<ResourceLocation, List<ResourceLocation>> formPerkMap = new HashMap<>();
 
     // 临时变量
@@ -163,7 +164,7 @@ public class PlayerFormComponent implements AutoSyncedComponent {
             }
         }
         if (tag.contains("now_perk_tree")) {
-            nowPerkTree = Identifier.tryParse(tag.getString("now_perk_tree"));
+            nowPerkTree = ResourceLocation.tryParse(tag.getString("now_perk_tree"));
         }
         if (tag.contains("perks")) {
             formPerkMap.clear();
@@ -225,11 +226,11 @@ public class PlayerFormComponent implements AutoSyncedComponent {
         }
         tag.put("instinctEffects", effects);
         tag.putString("now_perk_tree", nowPerkTree.toString());
-        NbtCompound perks = new NbtCompound();
-        for (Map.Entry<Identifier, List<Identifier>> perkEntry : formPerkMap.entrySet()) {
-            NbtList perkTree = new NbtList();
-            for (Identifier perkID : perkEntry.getValue()) {
-                perkTree.add(NbtString.of(perkID.toString()));
+        CompoundTag perks = new CompoundTag();
+        for (Map.Entry<ResourceLocation, List<ResourceLocation>> perkEntry : formPerkMap.entrySet()) {
+            ListTag perkTree = new ListTag();
+            for (ResourceLocation perkID : perkEntry.getValue()) {
+                perkTree.add(StringTag.valueOf(perkID.toString()));
             }
             if (perkTree.isEmpty()) {
                 continue;

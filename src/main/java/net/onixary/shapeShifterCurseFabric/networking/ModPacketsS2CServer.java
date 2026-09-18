@@ -12,6 +12,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.additional_power.VirtualTotemPower;
+import net.onixary.shapeShifterCurseFabric.perk.IPerk;
+import net.onixary.shapeShifterCurseFabric.perk.PerkTree;
+import net.onixary.shapeShifterCurseFabric.perk.PerkUtils;
+import net.onixary.shapeShifterCurseFabric.perk.RegPerks;
 import net.onixary.shapeShifterCurseFabric.player_form.DynamicForm;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
 import net.onixary.shapeShifterCurseFabric.player_form.RegPlayerForms;
@@ -204,7 +208,7 @@ public class ModPacketsS2CServer {
         }
     }
 
-    public static void updatePatronLevel(MinecraftServer server) {
+    public static void updateOldPatronLevel(MinecraftServer server) {
         HashMap<UUID, Integer> patronLevels = PatronUtils.PatronLevels;
         int PairCount = patronLevels.size();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -214,13 +218,13 @@ public class ModPacketsS2CServer {
                 buf.writeUUID(entry.getKey());
                 buf.writeInt(entry.getValue());
             }
-            ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.UPDATE_PATRON_LEVEL), buf));
+            ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.OLD_UPDATE_PATRON_LEVEL), buf));
         }
     }
 
-    public static void OpenPatronFormSelectMenu(ServerPlayer player) {
+    public static void OpenOldPatronFormSelectMenu(ServerPlayer player) {
         FriendlyByteBuf buf = PacketByteBufs.create();
-        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.OPEN_PATRON_FORM_SELECT_MENU), buf));
+        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.OLD_OPEN_PATRON_FORM_SELECT_MENU), buf));
     }
 
     public static void OpenFormSelectMenu(ServerPlayer player, Player target) {
@@ -365,5 +369,51 @@ public class ModPacketsS2CServer {
         BytePayload.registerS2C(ModPackets.MELT_AUTH_SUB_KEY);
         BytePayload.registerS2C(ModPackets.REQUEST_PATRON_AUTH_FILE);
         BytePayload.registerS2C(ModPackets.SET_SUPER_USER_LEVEL);
+    }
+
+    public static void sendPerkAvailability(ServerPlayerEntity player, boolean fullUpdate, HashMap<Identifier, Boolean> perkAvailability) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeBoolean(fullUpdate);
+        buf.writeInt(perkAvailability.size());
+        for (Map.Entry<Identifier, Boolean> entry : perkAvailability.entrySet()) {
+            buf.writeIdentifier(entry.getKey());
+            buf.writeBoolean(entry.getValue());
+        }
+        ServerPlayNetworking.send(player, ModPackets.SYNC_PERK_AVAILABILITY, buf);
+    }
+
+    public static void sendPerkAvailabilityFull(ServerPlayerEntity player) {
+        sendPerkAvailability(player, true, PerkUtils.getPlayerPerkAvailability(player));
+    }
+
+    public static void sendPerkData(ServerPlayerEntity player, boolean fullUpdate, IPerk... perks) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeBoolean(fullUpdate);
+        buf.writeInt(perks.length);
+        for (IPerk perk : perks) {
+            buf.writeIdentifier(perk.getID());
+            buf.writeInt(perk.getXpCost());
+        }
+        ServerPlayNetworking.send(player, ModPackets.SYNC_PERK_DATA, buf);
+    }
+
+    public static void sendPerkDataFull(ServerPlayerEntity player) {
+        PerkTree perkTree = PerkUtils.getPlayerNowPerkTree(player);
+        if (perkTree == null) {
+            return;
+        }
+        List<Identifier> perks = perkTree.getAllPerks();
+        sendPerkData(player, true, perks.stream().map(RegPerks::getPerk).filter(Objects::nonNull).toArray(IPerk[]::new));
+    }
+
+    public static void sendOpenFormUpgradeMenu(ServerPlayerEntity player, int tier) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeInt(tier);
+        ServerPlayNetworking.send(player, ModPackets.OPEN_FORM_UPGRADE_MENU, buf);
+    }
+
+    public static void sendOpenSelectSubFormMenu(ServerPlayerEntity player) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        ServerPlayNetworking.send(player, ModPackets.OPEN_SELECT_SUB_FORM_MENU, buf);
     }
 }

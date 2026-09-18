@@ -83,8 +83,16 @@ public class RegCustomItem {
     // 用于成就图标的占位物品
     public static final Item ICON_CURSED_MOON = register("icon_cursed_moon", new Item(new Item.Properties()));
     // 蛛丝弹占位物品
-    public static final Item WEB_PROJECTILE = register("web_projectile", new Item(new Item.Properties()));
-    public static final Item SILK_DEW = register("silk_dew", new SilkDew(new Item.Properties()));
+    public static final Item WEB_PROJECTILE = register("web_projectile", new Item(new Item.Settings()));
+    public static final Item SILK_DEW = register("silk_dew", new SilkDew(new Item.Settings()));
+
+    public static final Item RIPPLE_MIRROR = register("ripple_mirror", new RippleMirror(new Item.Settings()));
+
+    public static ItemStack buildPotion(Item PotionItem, Potion potion) {
+        ItemStack potionStack = new ItemStack(PotionItem);
+        PotionUtil.setPotion(potionStack, potion);
+        return potionStack;
+    }
 
     public static final CreativeModeTab SSC_GROUP = new CreativeModeTab.Builder(CreativeModeTab.Row.TOP, 0)
             .icon(() -> new ItemStack(ICON_CURSED_MOON))
@@ -134,6 +142,7 @@ public class RegCustomItem {
                 entries.accept(AUXILIARY_AXE);
                 entries.accept(SELECT_FORM_ITEM);
                 entries.accept(SILK_DEW);
+                entries.accept(RIPPLE_MIRROR);
                 // 方块物品注册
                 entries.accept(MOONDUST_CRYSTAL_GRIT);
                 entries.accept(WEB_COMPOSTER);

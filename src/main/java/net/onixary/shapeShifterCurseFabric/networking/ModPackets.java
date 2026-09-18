@@ -8,7 +8,7 @@ public class ModPackets {
 
     // 新增服务端到客户端的附件同步包
     // New server-to-client attachment sync packet
-    // public static final Identifier SYNC_EFFECT_ATTACHMENT = Identifier.of(ShapeShifterCurseFabric.MOD_ID, "sync_effect_attachment");
+    // public static final ResourceLocation SYNC_EFFECT_ATTACHMENT = ResourceLocation.of(ShapeShifterCurseFabric.MOD_ID, "sync_effect_attachment");
 
 
     public static final ResourceLocation SYNC_CURSED_MOON_DATA = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "sync_cursed_moon_data");
@@ -43,13 +43,14 @@ public class ModPackets {
 
     public static final ResourceLocation ACTIVE_VIRTUAL_TOTEM = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "active_virtual_totem");
 
-    public static final ResourceLocation UPDATE_PATRON_LEVEL = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "update_patron_level");
-    public static final ResourceLocation OPEN_PATRON_FORM_SELECT_MENU = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "open_patron_form_select_menu");
-    public static final ResourceLocation SET_PATRON_FORM = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "set_patron_form");
+    // 老版
+    public static final ResourceLocation OLD_UPDATE_PATRON_LEVEL = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "old_update_patron_level");
+    public static final ResourceLocation OLD_OPEN_PATRON_FORM_SELECT_MENU = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "old_open_patron_form_select_menu");
+    public static final ResourceLocation OLD_SET_PATRON_FORM = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "old_set_patron_form");
 
-    // S2C 结构: UUID-玩家UUID Boolean-是否启用动画, (仅在启用动画时包含)Identifier-动画ID, Int-动画次数. Int-动画时长
+    // S2C 结构: UUID-玩家UUID Boolean-是否启用动画, (仅在启用动画时包含)ResourceLocation-动画ID, Int-动画次数. Int-动画时长
     public static final ResourceLocation UPDATE_POWER_ANIM_DATA_TO_CLIENT = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "update_power_anim_data_to_client");
-    // C2S 结构: Boolean-是否启用动画, (仅在启用动画时包含)Identifier-动画ID, Int-动画次数. Int-动画时长
+    // C2S 结构: Boolean-是否启用动画, (仅在启用动画时包含)ResourceLocation-动画ID, Int-动画次数. Int-动画时长
     public static final ResourceLocation UPDATE_POWER_ANIM_DATA_TO_SERVER = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "update_power_anim_data_to_server");
     // C2S 结构: UUID-玩家UUID
     public static final ResourceLocation REQUEST_POWER_ANIM_DATA = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "request_power_anim_data");
@@ -68,5 +69,14 @@ public class ModPackets {
     public static final ResourceLocation MELT_AUTH_SUB_KEY = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "melt_auth_sub_key");
 
     public static final ResourceLocation SET_SUPER_USER_LEVEL = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "set_super_user_level");
+
     public static final ResourceLocation ADD_PERK = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "add_perk");
+    public static final ResourceLocation REQUEST_PERK_AVAILABILITY = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "request_perk_availability");
+    public static final ResourceLocation SYNC_PERK_AVAILABILITY = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "sync_perk_availability");
+    public static final ResourceLocation REQUEST_PERK_DATA = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "request_perk_data");
+    public static final ResourceLocation SYNC_PERK_DATA = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "sync_perk_data");
+    public static final ResourceLocation OPEN_FORM_UPGRADE_MENU = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "open_form_upgrade_menu");
+
+    public static final ResourceLocation OPEN_SELECT_SUB_FORM_MENU = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "open_select_sub_form_menu");
+    public static final ResourceLocation REQUEST_SET_SUB_FORM = ResourceLocation.fromNamespaceAndPath(ShapeShifterCurseFabric.MOD_ID, "request_set_sub_form");
 }

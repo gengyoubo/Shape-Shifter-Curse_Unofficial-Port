@@ -14,13 +14,16 @@ import net.onixary.shapeShifterCurseFabric.additional_power.ActionOnJumpPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.ActionOnSprintingToSneakingPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.BatBlockAttachPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.JumpEventCondition;
+import net.onixary.shapeShifterCurseFabric.items.RegCustomItem;
 import net.onixary.shapeShifterCurseFabric.perk.PerkUtils;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.IPlayerAnimController;
 import net.onixary.shapeShifterCurseFabric.player_form.DynamicForm;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
+import net.onixary.shapeShifterCurseFabric.player_form.ISubForm;
 import net.onixary.shapeShifterCurseFabric.player_form.RegPlayerForms;
 import net.onixary.shapeShifterCurseFabric.player_form.skin.PlayerSkinComponent;
 import net.onixary.shapeShifterCurseFabric.player_form.skin.RegPlayerSkinComponent;
+import net.onixary.shapeShifterCurseFabric.player_form.utils.FormUtils;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.TransformManager;
 import net.onixary.shapeShifterCurseFabric.util.FormTextureUtils;
 import net.onixary.shapeShifterCurseFabric.util.Verify.AuthServer;
@@ -85,7 +88,7 @@ public class ModPacketsC2S {
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
-                BytePayload.id(SET_PATRON_FORM),
+                OLD_SET_PATRON_FORM,
                 net.onixary.shapeShifterCurseFabric.networking.ModPacketsC2S::receiveSetPatronForm
         );
 
@@ -112,6 +115,21 @@ public class ModPacketsC2S {
         ServerPlayNetworking.registerGlobalReceiver(
                 BytePayload.id(ADD_PERK),
                 ModPacketsC2S::receiveAddPerk
+        );
+
+        ServerPlayNetworking.registerGlobalReceiver(
+                REQUEST_PERK_AVAILABILITY,
+                ModPacketsC2S::receiveRequestPerkAvailability
+        );
+
+        ServerPlayNetworking.registerGlobalReceiver(
+                REQUEST_PERK_DATA,
+                ModPacketsC2S::receiveRequestPerkData
+        );
+
+        ServerPlayNetworking.registerGlobalReceiver(
+                REQUEST_SET_SUB_FORM,
+                ModPacketsC2S::receiveRequestSetSubForm
         );
     }
 
@@ -243,6 +261,64 @@ public class ModPacketsC2S {
         ResourceLocation perkId = payload.data().readResourceLocation();
         ctx.server().execute(() -> {
             PerkUtils.addPerkFromClient(ctx.player(), perkTreeId, perkId);
+        });
+    }
+
+    private static void receiveRequestPerkAvailability(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
+        minecraftServer.execute(() -> {
+            ModPacketsS2CServer.sendPerkAvailabilityFull(playerEntity);
+        });
+    }
+
+    private static void receiveRequestPerkData(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
+        minecraftServer.execute(() -> {
+            ModPacketsS2CServer.sendPerkDataFull(playerEntity);
+        });
+    }
+
+    private static void receiveRequestSetSubForm(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
+        Identifier subFormID = packetByteBuf.readIdentifier();
+        IForm form = RegPlayerForms.getPlayerForm(subFormID);
+        IForm playerNowForm = FormUtils.getPlayerForm(playerEntity);
+        if (form == null || form.isEquals(playerNowForm)) {
+            return;
+        }
+        IForm fM1 = null;
+        IForm fM2 = null;
+        if (form instanceof ISubForm subForm && subForm.isSubForm()) {
+            fM1 = (subForm).getMasterForm();
+        } else {
+            fM1 = form;
+        }
+        if (playerNowForm instanceof ISubForm subForm && subForm.isSubForm()) {
+            fM2 = subForm.getMasterForm();
+        } else {
+            fM2 = playerNowForm;
+        }
+        if (fM1 == null || !fM1.isEquals(fM2)) {
+            return;
+        }
+        boolean canUseThisForm = FormUtils.isFormCanUse(playerEntity, form);
+        if (!canUseThisForm) {
+            return;
+        }
+        minecraftServer.execute(() -> {
+            if (!playerEntity.getAbilities().creativeMode) {
+                boolean findItem = false;
+                PlayerInventory playerInventory = playerEntity.getInventory();
+                for (int i = 0; i < playerInventory.size(); i++) {
+                    ItemStack stack = playerInventory.getStack(i);
+                    if (stack.isOf(RegCustomItem.RIPPLE_MIRROR)) {
+                        stack.decrement(1);
+                        findItem = true;
+                        break;
+                    }
+                }
+                if (!findItem) {
+                    return;
+                }
+            }
+            TransformManager.forceTransform(playerEntity, form, false);
         });
     }
 

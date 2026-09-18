@@ -13,11 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Curios 兼容工具（NeoForge 版，重写自上游 Forge 预编译 CurioUtilsImpl.class 的 @Overwrite 逻辑）。
- * 供 DefaultAccessory 的 curio AccessoryIO 读写 Curios 槽位。NeoForge 的 getCuriosInventory 返回 Optional。
- */
+// XuHaoNan:
+// 新API未测试(大概率能用 基本CV旧API) 得等我互联版更新后用我拓展测试 我这边kilt老有问题
 public class CurioUtils {
+    public static boolean isLoaded() { return false; }
+
     public static boolean isEquipped(LivingEntity entity, Item item) {
         ICuriosItemHandler handler = CuriosApi.getCuriosInventory(entity).orElse(null);
         if (handler == null) {
@@ -77,4 +77,16 @@ public class CurioUtils {
             stacksHandler.getStacks().setStackInSlot(Index, stack);
         }
     }
+
+    public static Map<String, List<ItemStack>> getEntityCosmeticSlots(LivingEntity entity) { return Map.of(); }
+
+    public static List<ItemStack> getEntityCosmeticSlot(LivingEntity entity, String SlotName) { return List.of(); }
+
+    public static void setEntityCosmeticSlot(LivingEntity entity, String SlotName, int Index, ItemStack stack) { return; }
+
+    public static Map<String, List<Boolean>> getEntitySlotRenders(LivingEntity entity) { return Map.of(); }
+
+    public static List<Boolean> getEntitySlotRender(LivingEntity entity, String SlotName) { return List.of(); }
+
+    public static void setEntitySlotRender(LivingEntity entity, String SlotName, int Index, boolean render) { return; }
 }

@@ -13,6 +13,7 @@ import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.player.Player;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.mixin.accessor.PowerTypeRegistryAccessor;
+import net.onixary.shapeShifterCurseFabric.perk.RegPerks;
 import net.onixary.shapeShifterCurseFabric.player_animation.AnimationHolder;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AbstractAnimStateController;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AnimSystem;
@@ -59,6 +60,8 @@ public class DynamicForm implements IForm, ISubForm, NeedCheckUsableForm {
 
     public ResourceLocation fallbackFormID = null;
     public IForm masterForm = null;
+
+    public ResourceLocation perkTreeID = RegPerks.EMPTY_PERK_TREE;
 
     public DynamicForm(@Nullable ResourceLocation formID, JsonObject formData) {
         this.formID = formID;
@@ -258,6 +261,14 @@ public class DynamicForm implements IForm, ISubForm, NeedCheckUsableForm {
             ResourceLocation masterFormID = ResourceLocation.tryParse(formData.get("MasterForm").getAsString());
             this.masterForm = RegPlayerForms.getPlayerForm(masterFormID);
         }
+        if (formData.has("PerkTree")) {
+            Identifier perkTreeID = Identifier.tryParse(formData.get("PerkTree").getAsString());
+            if (RegPerks.PerkTreeRegistry.containsKey(perkTreeID)) {
+                this.perkTreeID = perkTreeID;
+            } else {
+                this.perkTreeID = RegPerks.EMPTY_PERK_TREE;
+            }
+        }
     }
 
     public static DynamicForm fromJson(@Nullable ResourceLocation identifier, JsonObject data) {
@@ -409,5 +420,10 @@ public class DynamicForm implements IForm, ISubForm, NeedCheckUsableForm {
             PlayerFormComponent pfc = PlayerFormComponent.COMPONENT.get(player);
             pfc.setFallbackForm(this.fallbackFormID);
         }
+    }
+
+    @Override
+    public Identifier getPerkTreeID() {
+        return perkTreeID;
     }
 }

@@ -22,8 +22,22 @@ public class PerkUtils {
         return getPlayerPerks(player).get(perkTreeID);
     }
 
-    public static void removeInValidPerk(Player player, ResourceLocation perkTreeID) {
-        if (!(player instanceof ServerPlayer playerEntity)) return;
+    public static @Nullable List<IPerk> getPlayerPerksObject(Player player, ResourceLocation perkTreeID) {
+        // 仅服务器端 客户端不保证数据能完整拿到
+        List<ResourceLocation> perkList = getPlayerPerks(player, perkTreeID);
+        if (perkList == null) return null;
+        List<IPerk> perkDataList = new ArrayList<>();
+        for (ResourceLocation perkID : perkList) {
+            IPerk perkData = RegPerks.getPerk(perkID);
+            if (perkData != null) {
+                perkDataList.add(perkData);
+            }
+        }
+        return perkDataList;
+    }
+
+    public static void removeInValidPerk(PlayerEntity player, ResourceLocation perkTreeID) {
+        if (!(player instanceof ServerPlayerEntity playerEntity)) return;
         PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
         PerkTree perkTree = RegPerks.getPerkTree(perkTreeID);
         if (perkTree == null) {
@@ -85,16 +99,47 @@ public class PerkUtils {
         if (perkTree == null) return;
         if (!perkTree.getAllPerks().contains(perkID)) return;
 
+        int xpCost = player.getAbilities().creativeMode ? 0 : perkData.getXpCost();
+        if (player.totalExperience < xpCost) {
+            return;
+        }
+
         PerkTree.PerkNode node = perkTree.getNode(perkID);
         if (node == null) return;
-        if (node.dependentPerkID() != null) {
+        if (!node.dependentPerkIDs.isEmpty()) {
             List<ResourceLocation> playerPerkList = getPlayerPerks(player, perkTreeID);
-            if (playerPerkList == null || !playerPerkList.contains(node.dependentPerkID())) return;
+            if (playerPerkList == null) return;
+            for (ResourceLocation dependentPerkID : node.dependentPerkIDs) {
+                if (!playerPerkList.contains(dependentPerkID)) return;
+            }
         }
-        int tier = node.tier();
-        // TODO tier 判断 需要给升级方块加个玩家UUID表 记录最后一个使用的升级方块等级
-        __addPerk(player, perkTreeID, perkID);
+        int tier = node.tier;
+        // 感觉Tier0在无诅咒之月可以点可以作为特性使用 可以在tier0设置一些特殊的Perk
+        if (tier > 0 && !isCanGainPerk(player)) {
+            return;
+        }
+        @Nullable FormAttunerBlockEntity lastUsedAttuner = FormAttunerBlock.getPlayerLastUsedAttuner(player);
+        if (lastUsedAttuner == null || lastUsedAttuner.level < tier) {
+            return;
+        }
+
+        if (perkData.canGain(player, component.nowForm)) {
+            player.addExperience(-xpCost);
+            __addPerk(player, perkTreeID, perkID);
+        }
         removeInValidPerk(player, perkTreeID);
+    }
+
+    public static boolean isCanGainPerk(Player player) {
+        // 仅检测从客户端提交的加点请求 服务器端的加点请求直接过 所以这里只能加环境检测
+        World world = player.getWorld();
+        if (world.getRegistryKey() != World.OVERWORLD) {
+            return false;
+        }
+        if (!CursedMoon.isInCursedMoon(world)) {
+            return false;
+        }
+        return true;
     }
 
     public static void loadAllPerk(Player player, ResourceLocation perkTreeID) {
@@ -125,5 +170,18 @@ public class PerkUtils {
         PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
         component.nowPerkTree = perkTreeID;
         component.sync();
+    }
+
+    public static HashMap<ResourceLocation, Boolean> getPlayerPerkAvailability(PlayerEntity player) {
+        PerkTree perkTree = getPlayerNowPerkTree(player);
+        if (perkTree == null) return new HashMap<>();
+        HashMap<ResourceLocation, Boolean> perkAvailability = new HashMap<>();
+        for (ResourceLocation perkID : perkTree.getAllPerks()) {
+            IPerk perkData = RegPerks.getPerk(perkID);
+            if (perkData != null) {
+                perkAvailability.put(perkID, perkData.canGain(player, PlayerFormComponent.COMPONENT.get(player).nowForm));
+            }
+        }
+        return perkAvailability;
     }
 }

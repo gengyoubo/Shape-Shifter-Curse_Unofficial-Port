@@ -4,18 +4,28 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.FormUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
-public class NormalPerk implements IPerk {
+public class NormalPerk implements IPerk, IPerkClient {
     public final ResourceLocation perkID;
     public final List<ResourceLocation> powerAdd = new ArrayList<>();
     public final List<ResourceLocation> powerRemove = new ArrayList<>();
 
     public boolean repeatable = false;
     public BiConsumer<Player, IForm> onGainFunc = null;
+    public BiPredicate<Player, IForm> canGainCondition = null;
+
+    public int xpCost = 0;
+
+    public @Nullable ResourceLocation Icon = null;
+    public @Nullable Component Name = null;
+    public @Nullable Component Desc = null;
 
     public NormalPerk(ResourceLocation perkID) {
         this.perkID = perkID;
@@ -77,5 +87,64 @@ public class NormalPerk implements IPerk {
         for (ResourceLocation powerID : powerRemove) {
             FormUtils.removePower(player, powerID, powerSource);
         }
+    }
+
+    @Override
+    public boolean canGain(PlayerEntity player, IForm form) {
+        return canGainCondition == null || canGainCondition.test(player, form);
+    }
+
+    @Override
+    public int getXpCost() {
+        return xpCost;
+    }
+
+    public NormalPerk XpCost(int xpCost) {
+        this.xpCost = xpCost;
+        return this;
+    }
+
+    public NormalPerk canGain(BiPredicate<PlayerEntity, IForm> canGainCondition) {
+        this.canGainCondition = canGainCondition;
+        return this;
+    }
+
+    public NormalPerk setIcon(Identifier icon) {
+        this.Icon = icon;
+        return this;
+    }
+
+    public NormalPerk setName(Component name) {
+        this.Name = name;
+        return this;
+    }
+
+    public NormalPerk setDesc(Component desc) {
+        this.Desc = desc;
+        return this;
+    }
+
+    @Override
+    public @Nullable Identifier getIcon() {
+        if (Icon != null) {
+            return Icon;
+        }
+        return IPerkClient.super.getIcon();
+    }
+
+    @Override
+    public @Nullable Component getName() {
+        if (Name != null) {
+            return Name;
+        }
+        return IPerkClient.super.getName();
+    }
+
+    @Override
+    public @Nullable Component getDesc() {
+        if (Desc != null) {
+            return Desc;
+        }
+        return IPerkClient.super.getDesc();
     }
 }

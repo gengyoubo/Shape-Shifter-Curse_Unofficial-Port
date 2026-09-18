@@ -240,4 +240,15 @@ public class BookOfShapeShifterScreenV2_P1 extends Screen implements WidgetEXUti
         this.onScrollWidget(mouseX, mouseY, verticalAmount);
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        } else if (this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
+            this.close();
+            return true;
+        }
+        return false;
+    }
 }

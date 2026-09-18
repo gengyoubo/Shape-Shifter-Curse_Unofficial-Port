@@ -18,8 +18,8 @@ import java.util.List;
 
 import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID;
 
-public class PatronFormSelectScreen extends Screen {
-    private static final ResourceLocation page_texID = ResourceLocation.fromNamespaceAndPath(MOD_ID,"textures/gui/patron_form_select_menu.png");
+public class OldPatronFormSelectScreen extends Screen {
+    private static final ResourceLocation page_texID = new Identifier(MOD_ID,"textures/gui/patron_form_select_menu.png");
     private final LocalPlayer player;
 
     private List<ResourceLocation> availableForms;
@@ -28,7 +28,7 @@ public class PatronFormSelectScreen extends Screen {
     private final List<ResourceLocation> buttonForms = new ArrayList<>();
     private final List<Button> buttonWidgetList = new ArrayList<>();
 
-    public PatronFormSelectScreen(Component title, LocalPlayer player) {
+    public OldPatronFormSelectScreen(Component title, LocalPlayer player) {
         super(title);
         this.player = player;
     }
@@ -53,7 +53,7 @@ public class PatronFormSelectScreen extends Screen {
     }
 
     private void SendSetPatronForm(ResourceLocation formID) {
-        ModPacketsS2C.sendSetPatronForm(formID);
+        ModPacketsS2C.sendOldSetPatronForm(formID);
     }
 
     private void LoadPage() {
@@ -168,6 +168,17 @@ public class PatronFormSelectScreen extends Screen {
 
     @Override
     public boolean isPauseScreen() {
+        return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        } else if (this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
+            this.close();
+            return true;
+        }
         return false;
     }
 }

@@ -25,6 +25,7 @@ public class NormalForm implements IForm {
     private @Nullable Consumer<Player> applyScaleFunc = null;
     private float defaultEyeScale = 1.0F;
     private boolean powerAnimRegistered = false;
+    private Identifier perkTreeID = RegPerks.EMPTY_PERK_TREE;
 
     public static final BiFunction<Float, Float, Consumer<Player>> NORMAL_SCALE_FUNC_BUILDER = (scale, eye_scale) -> (player) -> {
         ScaleData scaleDataWidth = ScaleTypes.WIDTH.getScaleData(player);
@@ -170,5 +171,15 @@ public class NormalForm implements IForm {
     public void onTransform_Finish(Player player) {
         PlayerFormComponent pfc = PlayerFormComponent.COMPONENT.get(player);
         pfc.setFallbackForm(null);
+    }
+
+    public NormalForm perkTree(Identifier perkTreeID) {
+        this.perkTreeID = perkTreeID;
+        return this;
+    }
+
+    @Override
+    public Identifier getPerkTreeID() {
+        return this.perkTreeID;
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.custom_ui.ui_part.ScaleScrollTextWidget;
 import net.onixary.shapeShifterCurseFabric.custom_ui.ui_part.WidgetEXUtils;
+import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2C;
 import net.onixary.shapeShifterCurseFabric.perk.PerkTree;
 import net.onixary.shapeShifterCurseFabric.perk.PerkUtils;
 import net.onixary.shapeShifterCurseFabric.perk.RegPerks;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,8 +30,13 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
     public static final ResourceLocation LABEL_GAINED = ShapeShifterCurseFabric.identifier("textures/perk/system/gained.png");
     public static final ResourceLocation LABEL_SELECT = ShapeShifterCurseFabric.identifier("textures/perk/system/select.png");
     public static final ResourceLocation LABEL_SELECTED = ShapeShifterCurseFabric.identifier("textures/perk/system/selected.png");
+    public static final ResourceLocation LABEL_CAN_NOT_GAIN = ShapeShifterCurseFabric.identifier("textures/perk/system/can_not_gain.png");
+    public static final ResourceLocation LABEL_DEPEND = ShapeShifterCurseFabric.identifier("textures/perk/system/depend.png");
 
-    public boolean isLocked;
+    public static final HashMap<Identifier, Boolean> perkAvailableMap = new HashMap<>();  // 仅客户端数据 仅影响渲染 仅代表服务器获取这个表时无法获取这个Perk
+    public static final HashMap<Identifier, Integer> perkXpCostMap = new HashMap<>();  // 仅客户端数据 实际消耗由服务器决定
+
+    public int tier = -1;
     public @NotNull PerkTree perkTree;
 
     public @Nullable PerkTree.PerkNode nowSelectNode;
@@ -51,8 +58,8 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
 
     public static final int nodeBaseX = 25;
     public static final int posXPerTier = 50;
-    public static final int nodeLineRootXOffset = 10;
-    public static final int nodeLineDependXOffset = -9;
+    public static final int nodeLineRootXOffset = 11;
+    public static final int nodeLineDependXOffset = -10;
     public static final int LineColor = 0xFF9F9F9F;
 
     public static final int NodeDrawStartX = -7;
@@ -82,10 +89,12 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         return this.WidgetList;
     }
 
-    public FormUpdateScreen(Component title, boolean isLocked, @Nullable PerkTree perkTree) {
+    public FormUpgradeScreen(int tier, Component title, @Nullable PerkTree perkTree) {
         super(title);
-        this.isLocked = isLocked;
+        this.tier = tier;
         this.perkTree = perkTree != null ? perkTree : Objects.requireNonNull(RegPerks.getPerkTree(RegPerks.EMPTY_PERK_TREE));
+        ModPacketsS2C.sendRequestPerkAvailability();
+        ModPacketsS2C.sendRequestPerkData();
     }
 
     @Override
@@ -98,7 +107,8 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         this.WidgetList.add(this.PerkDescWidget);
         this.AcquirePerkButton = Button.builder(Component.literal("GET"), button -> {
             if (this.nowSelectNode != null) {
-                PerkUtils.addPerk(Minecraft.getInstance().player, this.perkTree.getID(), this.nowSelectNode.perkID());
+                PerkUtils.addPerk(Minecraft.getInstance().player, this.perkTree.getID(), this.nowSelectNode.perkID);
+                ModPacketsS2C.sendRequestPerkAvailability();
             }
         }).pos(InfoPosX + 20, InfoPosY + 180).size(60, 10).build();
         this.addRenderableWidget(this.PerkNameWidget);
@@ -145,32 +155,73 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         super.render(context, mouseX, mouseY, delta);
     }
 
+    @Override
+    public boolean shouldPause() {
+        return false;
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return true;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        } else if (this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
+            this.close();
+            return true;
+        }
+        return false;
+    }
+
     // Utils
 
     public void drawConnectLine(GuiGraphics context, PerkTree.PerkNode perkNode) {
-        ResourceLocation depend = perkNode.dependentPerkID();
-        if (depend == null) return;
-        PerkTree.PerkNode dependNodeMetaData = perkTree.getNode(depend);
-        if (dependNodeMetaData == null) return;
-        int ox = nodeCenter.x;
-        int oy = nodeCenter.y;
-        int x1 = nodeBaseX + posXPerTier * perkNode.tier() + nodeLineDependXOffset;
-        int x2 = nodeBaseX + posXPerTier * dependNodeMetaData.tier() + nodeLineRootXOffset;
-        int y1 = perkNode.y();
-        int y2 = dependNodeMetaData.y();
-        int halfX = (x1 + x2) / 2;
-        context.fill(
-                ox + Math.min(x1, halfX), oy + y1,
-                ox + Math.max(x1, halfX) + 1, oy + y1 + 1,
-                LineColor);
-        context.fill(
-                ox + halfX, oy + Math.min(y1, y2),
-                ox + halfX + 1, oy + Math.max(y1, y2) + 1,
-                LineColor);
-        context.fill(
-                ox + Math.min(x2, halfX), oy + y2,
-                ox + Math.max(x2, halfX) + 1, oy + y2 + 1,
-                LineColor);
+        List<Identifier> depends = perkNode.dependentPerkIDs;
+        if (depends.isEmpty()) return;
+        for (Identifier depend : depends) {
+            PerkTree.PerkNode dependNodeMetaData = perkTree.getNode(depend);
+            if (dependNodeMetaData == null) return;
+            int ox = nodeCenter.x;
+            int oy = nodeCenter.y;
+            int x1 = nodeBaseX + posXPerTier * perkNode.tier + nodeLineDependXOffset;
+            int x2 = nodeBaseX + posXPerTier * dependNodeMetaData.tier + nodeLineRootXOffset;
+            int y1 = perkNode.y;
+            int y2 = dependNodeMetaData.y;
+            if (perkNode.tier - 1 == dependNodeMetaData.tier) {
+                int halfX = (x1 + x2) / 2;
+                context.fill(
+                        ox + Math.min(x1, halfX), oy + y1,
+                        ox + Math.max(x1, halfX) + 1, oy + y1 + 1,
+                        LineColor);
+                context.fill(
+                        ox + halfX, oy + Math.min(y1, y2),
+                        ox + halfX + 1, oy + Math.max(y1, y2) + 1,
+                        LineColor);
+                context.fill(
+                        ox + Math.min(x2, halfX), oy + y2,
+                        ox + Math.max(x2, halfX) + 1, oy + y2 + 1,
+                        LineColor);
+            } else {
+                // AI整的虚线 看起来应该没有对应的API了 所以尽量别整需要虚线的Perk 这种比较费性能 除非使用贴图 但是这种不太好改
+                int dashLen = posXPerTier / 2 - 10;
+                int dashSize = 2;
+                int gapSize = 1;
+                int lastPixelX = x1;
+                for (int i = 0; i < dashLen; i += dashSize + gapSize) {
+                    int to = Math.min(i + dashSize, dashLen);
+                    if (i >= to) break;
+                    context.fill(
+                            ox + x1 - to, oy + y1,
+                            ox + x1 - i, oy + y1 + 1,
+                            LineColor);
+                    lastPixelX = x1 - to;
+                }
+                context.fill(ox + lastPixelX - 2, oy + y1 - 1, ox + lastPixelX - 1, oy + y1 + 2, LineColor);
+            }
+        }
     }
 
     // playerGainedPerk 由调用方获取 毕竟drawNode调用频繁
@@ -186,11 +237,18 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         int NodePosY = nodeCenter.y + virtualNodeY;
         int left = virtualNodeX + NodeSelectStartX;
         int top = virtualNodeY + NodeSelectStartY;
-        if (playerGainedPerk != null && playerGainedPerk.contains(perkNode.perkID())) {
-            context.blit(LABEL_GAINED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+        if (playerGainedPerk != null && playerGainedPerk.contains(perkNode.perkID)) {
+            context.drawTexture(LABEL_GAINED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+        } else if (!perkAvailableMap.getOrDefault(perkNode.perkID, true)) {
+            context.drawTexture(LABEL_CAN_NOT_GAIN, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
         }
-        if (perkNode == this.nowSelectNode) {
-            context.blit(LABEL_SELECTED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+
+        if (this.nowSelectNode != null) {
+            if (perkNode == this.nowSelectNode) {
+                context.drawTexture(LABEL_SELECTED, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+            } else if (this.nowSelectNode.dependentPerkIDs.contains(perkNode.perkID)) {
+                context.drawTexture(LABEL_DEPEND, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
+            }
         }
         if (mouseX >= left && mouseX < left + NodeSelectRectWidth && mouseY >= top && mouseY < top + NodeSelectRectHeight) {
             context.blit(LABEL_SELECT, NodePosX - 9, NodePosY - 9, 0, 0, 20, 20, 20, 20);
@@ -282,18 +340,36 @@ public class FormUpdateScreen extends Screen implements WidgetEXUtils.IWidgetEX 
         cameraScale = newScale;
     }
 
+    public boolean isNowPerkCanGain() {
+        if (this.nowSelectNode == null) {
+            return false;
+        }
+        if (this.nowSelectNode.tier > this.tier) {
+            return false;
+        }
+        int requireXp = this.client.player.getAbilities().creativeMode ? 0 : perkXpCostMap.getOrDefault(this.nowSelectNode.perkID, 0);
+        if (this.client.player.totalExperience < requireXp) {
+            return false;
+        }
+        return true;
+    }
+
     public void onNodeSelect() {
         try {
-            Minecraft.getInstance().player.sendSystemMessage(Component.literal("Node Selected: " + this.nowSelectNode.perkID().toString()));
+            MinecraftClient.getInstance().player.sendMessage(Text.literal("Node Selected: " + this.nowSelectNode.perkID.toString()), false);
+            MinecraftClient.getInstance().player.sendMessage(Text.literal("Can Gained (Cache): " + this.perkAvailableMap.getOrDefault(this.nowSelectNode.perkID, true)), false);
         } catch (Exception e) {
             Minecraft.getInstance().player.sendSystemMessage(Component.literal("No Node Selected"));
         }
         if (this.nowSelectNode != null) {
-            this.PerkNameWidget.setMessage(RegPerks.getPerkName(this.nowSelectNode.perkID()));
-            this.PerkDescWidget.reloadText(RegPerks.getPerkDescription(this.nowSelectNode.perkID()));
+            this.PerkNameWidget.setMessage(RegPerks.getPerkName(this.nowSelectNode.perkID));
+            this.PerkDescWidget.reloadText(RegPerks.getPerkDescription(this.nowSelectNode.perkID));
+            this.AcquirePerkButton.active = this.isNowPerkCanGain();
         } else {
-            this.PerkNameWidget.setMessage(Component.literal(""));
-            this.PerkDescWidget.reloadText(Component.literal(""));
+            this.PerkNameWidget.setMessage(Text.literal(""));
+            this.PerkDescWidget.reloadText(Text.literal(""));
+            this.AcquirePerkButton.active = false;
         }
+        ModPacketsS2C.sendRequestPerkAvailability();
     }
 }

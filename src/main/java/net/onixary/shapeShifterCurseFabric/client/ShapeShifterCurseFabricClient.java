@@ -328,7 +328,7 @@ public class ShapeShifterCurseFabricClient implements ClientModInitializer {
 				}
 			}
 			if (openTestUIKeybind.isDown()) {
-				FormUpdateScreen screen = new FormUpdateScreen(Component.literal(""), false, PerkUtils.getPlayerNowPerkTree(client.player));
+                FormUpdateScreen screen = new FormUpdateScreen(-1, Component.literal(""), PerkUtils.getPlayerNowPerkTree(client.player));
 				client.setScreen(screen);
 			}
 		});
@@ -337,6 +337,8 @@ public class ShapeShifterCurseFabricClient implements ClientModInitializer {
 		PatronUtils.OnClientInit();
 		AuthClient.init();
 		RegMenuScreen.init();
+
+		BlockEntityRendererFactories.register(RegCustomBlock.FORM_ATTUNER_BLOCK_ENTITY, FormAttunerBeamRenderer::new);
 	}
 
 	public static ShaderInstance getFurGradientShader() {

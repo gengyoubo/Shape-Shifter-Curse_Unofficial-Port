@@ -1,10 +1,20 @@
 plugins {
-    id 'fabric-loom' version '1.17.19'
+    // 版本在 settings.gradle 的 pluginManagement.plugins 里统一钉死（loom 只能有一个版本在 classpath 上）
+    id 'fabric-loom'
     id 'maven-publish'
 }
 
 version = "${project.mod_version}${project.special_build_version}+${minecraft_version}"
 group = project.maven_group
+
+// Apoli / Calio 的源码已并入本仓库（见 settings.gradle）。monorepo 下各模块自持版本号没有意义，
+// 这里统一成 SSCU 的 group + version —— 发布坐标因此是
+// net.wuhenqiubai:{shape-shifter-curse-unofficial, Apoli-Legacy, Calio-Legacy}:<同一个版本>。
+// ⚠ 子项目自己的 build 脚本里不能再写 version/group，否则会覆盖这里。
+subprojects {
+    version = rootProject.version
+    group = rootProject.group
+}
 
 // 从Github Action 环境获取构建Channel和BuildVersion
 def channel = System.getenv('channel')
@@ -189,11 +199,13 @@ dependencies {
     // satin shader
     modImplementation "org.ladysnake:satin:${satin_version}"
 
-    // 使用BluSpring大佬的Apoli-Legacy，减少移植难度
-    modImplementation "io.github.apace100:Apoli-Legacy:${project.apoli_version}"
-    include "io.github.apace100:Apoli-Legacy:${project.apoli_version}"
-//    modImplementation "io.github.apace100:Calio-Legacy:${project.calio_version}"
-//    include "io.github.apace100:Calio-Legacy:${project.calio_version}"
+    // Apoli-Legacy（本仓库子项目，源码已并入；Calio 由它自己传递进来）
+    // ⚠ 同级 loom 项目必须用 `configuration: "namedElements"`（未 remap 的 dev 产物），
+    //   用 `modApi project(":apoli")` 会让 loom 去读 :apoli 的 remap 产物 build/libs/*.jar，
+    //   而那个文件在配置期还不存在 → "Failed to setup Minecraft ... NoSuchFileException"。
+    //   用 api（而非 modApi）也是为了让它以 compile 作用域进发布元数据，Addon 才能只声明 SSCU 传递拿到 Apoli。
+    api project(path: ":apoli", configuration: "namedElements")
+    include project(":apoli")
 
     modApi("com.github.Virtuoel:Pehkui:${pehkui_version}", {
         exclude group: "net.fabricmc.fabric-api"

@@ -53,7 +53,7 @@ public abstract class ItemStackMixin {
                     EffectManager.clearTransformativeEffect(player);
                 }
                 if (FormUtils.InitialForm.hasFlag(currentForm) && InstinctUtils.getInstinctValuePercent(player) < 0.1) {
-                    player.sendMessage(Text.translatable("info.shape-shifter-curse.transformative_effect_cure").formatted(Formatting.YELLOW));
+                    player.sendSystemMessage(Component.translatable("info.shape-shifter-curse.transformative_effect_cure").withStyle(ChatFormatting.YELLOW));
                     IForm nextForm = currentForm._getPrevForm(player, ITransformReason.ItemReasonBuilder.apply(stack));
                     if (nextForm != currentForm) {
                         PlayerFormComponent.COMPONENT.get(player).lastTransformByCure = true;

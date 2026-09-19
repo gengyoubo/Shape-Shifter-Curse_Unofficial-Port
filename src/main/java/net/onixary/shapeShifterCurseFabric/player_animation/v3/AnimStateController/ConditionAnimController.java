@@ -49,8 +49,8 @@ public class ConditionAnimController extends AbstractAnimStateController {
     @Override
     public @NotNull List<AnimationHolder> getAllAnimations() {
         List<AnimationHolder> result = new ArrayList<>();
-        for (Pair<BiFunction<PlayerEntity, AnimSystem.AnimSystemData, Boolean>, AnimationHolder> pair : this.animConditionList) {
-            result.add(pair.getRight());
+        for (Tuple<BiFunction<Player, AnimSystem.AnimSystemData, Boolean>, AnimationHolder> pair : this.animConditionList) {
+            result.add(pair.getB());
         }
         result.add(this.defaultAnimation);
         return result;

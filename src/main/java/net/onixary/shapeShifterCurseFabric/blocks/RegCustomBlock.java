@@ -20,7 +20,10 @@ import net.onixary.shapeShifterCurseFabric.blocks.block_entity.AltarBlockEntity;
 import net.onixary.shapeShifterCurseFabric.blocks.block_entity.FormAttunerBlockEntity;
 
 public final class RegCustomBlock {
-    public static final Block MOONDUST_CRYSTAL_GRIT = register("moondust_crystal_grit", new Block(BlockBehaviour.Properties.of(Blocks.GRAVEL).mapColor(MapColor.COLOR_PURPLE).strength(0.6f, 0.6f).sound(SoundType.GRAVEL)));
+    // 用 ofFullCopy 而非 of()：前者会连 gravel 的掉落物/爆炸抗性等一并继承，后者只给一份空白属性。
+    // （合并上游时这行被改成了 of(Blocks.GRAVEL) —— 那是个不存在的重载 —— 后又降级成 of()，属性全丢。）
+    public static final Block MOONDUST_CRYSTAL_GRIT = register("moondust_crystal_grit", new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.GRAVEL).mapColor(MapColor.COLOR_PURPLE).strength(0.6f, 0.6f).sound(SoundType.GRAVEL)));
+    // TODO TEMP_WEB_BRIDGE 仅在测试时有物品 发布时记得用 registerWithOutItem
     public static final Block TEMP_WEB_BRIDGE = register("temp_web_bridge", new TempWebBridgeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).strength(4.0f).randomTicks().noCollission().dynamicShape().noLootTable().isRedstoneConductor(Blocks::never).ignitedByLava().sound(SoundType.WOOL)));
 
     public static final Block WEB_COMPOSTER = register("web_composter", new WebComposterBlock(BlockBehaviour.Properties.of().mapColor(MapColor.PLANT).strength(0.6F).sound(SoundType.AZALEA).noOcclusion()));
@@ -29,15 +32,15 @@ public final class RegCustomBlock {
     public static final Block Altar_BLOCK = register("altar", new AltarBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).instrument(NoteBlockInstrument.BELL).strength(4.0F, 10.0F).sound(SoundType.AMETHYST).noOcclusion()));
     public static final BlockEntityType<AltarBlockEntity> Altar_BLOCK_ENTITY = registerBlockEntity("altar_block_entity", BlockEntityType.Builder.of(AltarBlockEntity::new, Altar_BLOCK).build(null));
 
-    public static final Block FORM_ATTUNER_BLOCK = register("form_attuner", new FormAttunerBlock(AbstractBlock.Settings.create().mapColor(MapColor.WHITE_GRAY).instrument(Instrument.BELL).luminance((state) -> 15).strength(4.0F, 10.0F).sounds(BlockSoundGroup.GLASS).nonOpaque()));
-    public static final BlockEntityType<FormAttunerBlockEntity> FORM_ATTUNER_BLOCK_ENTITY = registerBlockEntity("form_attuner_block_entity", BlockEntityType.Builder.create(FormAttunerBlockEntity::new, FORM_ATTUNER_BLOCK).build(null));
+    public static final Block FORM_ATTUNER_BLOCK = register("form_attuner", new FormAttunerBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOL).instrument(NoteBlockInstrument.BELL).lightLevel((state) -> 15).strength(4.0F, 10.0F).sound(SoundType.GLASS).noOcclusion()));
+    public static final BlockEntityType<FormAttunerBlockEntity> FORM_ATTUNER_BLOCK_ENTITY = registerBlockEntity("form_attuner_block_entity", BlockEntityType.Builder.of(FormAttunerBlockEntity::new, FORM_ATTUNER_BLOCK).build(null));
 
     public static void ClientInit() {
         // transparent透明模式不写Z，会出现自排序问题遮挡自己，只需要镂空的模型应该使用getCutout
         BlockRenderLayerMap.INSTANCE.putBlock(TEMP_WEB_BRIDGE, RenderType.cutout());
         BlockRenderLayerMap.INSTANCE.putBlock(WEB_COMPOSTER, RenderType.cutout());
         BlockRenderLayerMap.INSTANCE.putBlock(DEW_COVERED_COBWEB, RenderType.cutout());
-        BlockRenderLayerMap.INSTANCE.putBlock(ALTER_BLOCK, RenderType.cutout());
+        BlockRenderLayerMap.INSTANCE.putBlock(Altar_BLOCK, RenderType.cutout());
         BlockRenderLayerMap.INSTANCE.putBlock(FORM_ATTUNER_BLOCK, RenderType.cutout());
     }
 

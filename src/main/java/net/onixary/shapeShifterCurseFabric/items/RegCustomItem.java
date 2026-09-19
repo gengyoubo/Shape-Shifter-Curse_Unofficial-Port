@@ -83,14 +83,14 @@ public class RegCustomItem {
     // 用于成就图标的占位物品
     public static final Item ICON_CURSED_MOON = register("icon_cursed_moon", new Item(new Item.Properties()));
     // 蛛丝弹占位物品
-    public static final Item WEB_PROJECTILE = register("web_projectile", new Item(new Item.Settings()));
-    public static final Item SILK_DEW = register("silk_dew", new SilkDew(new Item.Settings()));
+    public static final Item WEB_PROJECTILE = register("web_projectile", new Item(new Item.Properties()));
+    public static final Item SILK_DEW = register("silk_dew", new SilkDew(new Item.Properties()));
 
-    public static final Item RIPPLE_MIRROR = register("ripple_mirror", new RippleMirror(new Item.Settings()));
+    public static final Item RIPPLE_MIRROR = register("ripple_mirror", new RippleMirror(new Item.Properties()));
 
     public static ItemStack buildPotion(Item PotionItem, Potion potion) {
         ItemStack potionStack = new ItemStack(PotionItem);
-        PotionUtil.setPotion(potionStack, potion);
+        potionStack.set(DataComponents.POTION_CONTENTS, new PotionContents(BuiltInRegistries.POTION.wrapAsHolder(potion)));
         return potionStack;
     }
 
@@ -183,12 +183,6 @@ public class RegCustomItem {
             potionStacks.add(buildPotion(Items.TIPPED_ARROW, potion));
         }
         return potionStacks;
-    }
-
-    public static ItemStack buildPotion(Item PotionItem, Potion potion) {
-        ItemStack potionStack = new ItemStack(PotionItem);
-        potionStack.set(DataComponents.POTION_CONTENTS, new PotionContents(BuiltInRegistries.POTION.wrapAsHolder(potion)));
-        return potionStack;
     }
 
     public static <T extends Item> T register(String path, T item) {

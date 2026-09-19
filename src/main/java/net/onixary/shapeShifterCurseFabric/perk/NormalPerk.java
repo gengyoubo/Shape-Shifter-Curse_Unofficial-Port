@@ -1,5 +1,6 @@
 package net.onixary.shapeShifterCurseFabric.perk;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.onixary.shapeShifterCurseFabric.player_form.IForm;
@@ -10,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
 public class NormalPerk implements IPerk, IPerkClient {
     public final ResourceLocation perkID;
@@ -90,7 +90,7 @@ public class NormalPerk implements IPerk, IPerkClient {
     }
 
     @Override
-    public boolean canGain(PlayerEntity player, IForm form) {
+    public boolean canGain(Player player, IForm form) {
         return canGainCondition == null || canGainCondition.test(player, form);
     }
 
@@ -104,12 +104,12 @@ public class NormalPerk implements IPerk, IPerkClient {
         return this;
     }
 
-    public NormalPerk canGain(BiPredicate<PlayerEntity, IForm> canGainCondition) {
+    public NormalPerk canGain(BiPredicate<Player, IForm> canGainCondition) {
         this.canGainCondition = canGainCondition;
         return this;
     }
 
-    public NormalPerk setIcon(Identifier icon) {
+    public NormalPerk setIcon(ResourceLocation icon) {
         this.Icon = icon;
         return this;
     }
@@ -125,7 +125,7 @@ public class NormalPerk implements IPerk, IPerkClient {
     }
 
     @Override
-    public @Nullable Identifier getIcon() {
+    public @Nullable ResourceLocation getIcon() {
         if (Icon != null) {
             return Icon;
         }

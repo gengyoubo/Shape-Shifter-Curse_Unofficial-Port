@@ -8,7 +8,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.additional_power.ActionOnJumpPower;
 import net.onixary.shapeShifterCurseFabric.additional_power.ActionOnSprintingToSneakingPower;
@@ -84,17 +86,17 @@ public class ModPacketsC2S {
 
         ServerPlayNetworking.registerGlobalReceiver(
                 BytePayload.id(UPDATE_CUSTOM_COLOR),
-                net.onixary.shapeShifterCurseFabric.networking.ModPacketsC2S::onUpdatePlayerCustomColor
+                ModPacketsC2S::onUpdatePlayerCustomColor
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
-                OLD_SET_PATRON_FORM,
-                net.onixary.shapeShifterCurseFabric.networking.ModPacketsC2S::receiveSetPatronForm
+                BytePayload.id(OLD_SET_PATRON_FORM),
+                ModPacketsC2S::receiveSetPatronForm
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
                 BytePayload.id(SET_FORM),
-                net.onixary.shapeShifterCurseFabric.networking.ModPacketsC2S::receiveSetForm
+                ModPacketsC2S::receiveSetForm
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
@@ -118,17 +120,17 @@ public class ModPacketsC2S {
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
-                REQUEST_PERK_AVAILABILITY,
+                BytePayload.id(REQUEST_PERK_AVAILABILITY),
                 ModPacketsC2S::receiveRequestPerkAvailability
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
-                REQUEST_PERK_DATA,
+                BytePayload.id(REQUEST_PERK_DATA),
                 ModPacketsC2S::receiveRequestPerkData
         );
 
         ServerPlayNetworking.registerGlobalReceiver(
-                REQUEST_SET_SUB_FORM,
+                BytePayload.id(REQUEST_SET_SUB_FORM),
                 ModPacketsC2S::receiveRequestSetSubForm
         );
     }
@@ -264,22 +266,22 @@ public class ModPacketsC2S {
         });
     }
 
-    private static void receiveRequestPerkAvailability(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
-        minecraftServer.execute(() -> {
-            ModPacketsS2CServer.sendPerkAvailabilityFull(playerEntity);
+    private static void receiveRequestPerkAvailability(BytePayload payload, ServerPlayNetworking.Context ctx) {
+        ctx.server().execute(() -> {
+            ModPacketsS2CServer.sendPerkAvailabilityFull(ctx.player());
         });
     }
 
-    private static void receiveRequestPerkData(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
-        minecraftServer.execute(() -> {
-            ModPacketsS2CServer.sendPerkDataFull(playerEntity);
+    private static void receiveRequestPerkData(BytePayload payload, ServerPlayNetworking.Context ctx) {
+        ctx.server().execute(() -> {
+            ModPacketsS2CServer.sendPerkDataFull(ctx.player());
         });
     }
 
-    private static void receiveRequestSetSubForm(MinecraftServer minecraftServer, ServerPlayerEntity playerEntity, ServerPlayNetworkHandler serverPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
-        Identifier subFormID = packetByteBuf.readIdentifier();
+    private static void receiveRequestSetSubForm(BytePayload payload, ServerPlayNetworking.Context ctx) {
+        ResourceLocation subFormID = payload.data().readResourceLocation();
         IForm form = RegPlayerForms.getPlayerForm(subFormID);
-        IForm playerNowForm = FormUtils.getPlayerForm(playerEntity);
+        IForm playerNowForm = FormUtils.getPlayerForm(ctx.player());
         if (form == null || form.isEquals(playerNowForm)) {
             return;
         }
@@ -298,18 +300,18 @@ public class ModPacketsC2S {
         if (fM1 == null || !fM1.isEquals(fM2)) {
             return;
         }
-        boolean canUseThisForm = FormUtils.isFormCanUse(playerEntity, form);
+        boolean canUseThisForm = FormUtils.isFormCanUse(ctx.player(), form);
         if (!canUseThisForm) {
             return;
         }
-        minecraftServer.execute(() -> {
-            if (!playerEntity.getAbilities().creativeMode) {
+        ctx.server().execute(() -> {
+            if (!ctx.player().getAbilities().instabuild) {
                 boolean findItem = false;
-                PlayerInventory playerInventory = playerEntity.getInventory();
-                for (int i = 0; i < playerInventory.size(); i++) {
-                    ItemStack stack = playerInventory.getStack(i);
-                    if (stack.isOf(RegCustomItem.RIPPLE_MIRROR)) {
-                        stack.decrement(1);
+                Inventory playerInventory = ctx.player().getInventory();
+                for (int i = 0; i < playerInventory.getContainerSize(); i++) {
+                    ItemStack stack = playerInventory.getItem(i);
+                    if (stack.is(RegCustomItem.RIPPLE_MIRROR)) {
+                        stack.shrink(1);
                         findItem = true;
                         break;
                     }
@@ -318,7 +320,7 @@ public class ModPacketsC2S {
                     return;
                 }
             }
-            TransformManager.forceTransform(playerEntity, form, false);
+            TransformManager.forceTransform(ctx.player(), form, false);
         });
     }
 
@@ -331,7 +333,7 @@ public class ModPacketsC2S {
         BytePayload.registerC2S(SPRINTING_TO_SNEAKING_EVENT_ID);
         BytePayload.registerC2S(UPDATE_CUSTOM_SETTING);
         BytePayload.registerC2S(UPDATE_CUSTOM_COLOR);
-        BytePayload.registerC2S(SET_PATRON_FORM);
+        BytePayload.registerC2S(OLD_SET_PATRON_FORM);
         BytePayload.registerC2S(SET_FORM);
         BytePayload.registerC2S(UPDATE_POWER_ANIM_DATA_TO_SERVER);
         BytePayload.registerC2S(REQUEST_POWER_ANIM_DATA);

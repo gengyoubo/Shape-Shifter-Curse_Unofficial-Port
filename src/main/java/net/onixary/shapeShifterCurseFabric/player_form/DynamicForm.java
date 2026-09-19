@@ -262,7 +262,7 @@ public class DynamicForm implements IForm, ISubForm, NeedCheckUsableForm {
             this.masterForm = RegPlayerForms.getPlayerForm(masterFormID);
         }
         if (formData.has("PerkTree")) {
-            Identifier perkTreeID = Identifier.tryParse(formData.get("PerkTree").getAsString());
+            ResourceLocation perkTreeID = ResourceLocation.tryParse(formData.get("PerkTree").getAsString());
             if (RegPerks.PerkTreeRegistry.containsKey(perkTreeID)) {
                 this.perkTreeID = perkTreeID;
             } else {
@@ -423,7 +423,7 @@ public class DynamicForm implements IForm, ISubForm, NeedCheckUsableForm {
     }
 
     @Override
-    public Identifier getPerkTreeID() {
+    public ResourceLocation getPerkTreeID() {
         return perkTreeID;
     }
 }

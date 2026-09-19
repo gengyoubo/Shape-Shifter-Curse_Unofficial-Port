@@ -19,7 +19,7 @@ import java.util.List;
 import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID;
 
 public class OldPatronFormSelectScreen extends Screen {
-    private static final ResourceLocation page_texID = new Identifier(MOD_ID,"textures/gui/patron_form_select_menu.png");
+    private static final ResourceLocation page_texID = ResourceLocation.fromNamespaceAndPath(MOD_ID,"textures/gui/patron_form_select_menu.png");
     private final LocalPlayer player;
 
     private List<ResourceLocation> availableForms;
@@ -175,8 +175,8 @@ public class OldPatronFormSelectScreen extends Screen {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
-            this.close();
+        } else if (this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
+            this.onClose();
             return true;
         }
         return false;

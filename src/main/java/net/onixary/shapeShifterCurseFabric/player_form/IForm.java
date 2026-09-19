@@ -177,7 +177,7 @@ public interface IForm {
         return false;
     }
 
-    default Identifier getPerkTreeID() {
+    default ResourceLocation getPerkTreeID() {
         return RegPerks.EMPTY_PERK_TREE;
     }
 }

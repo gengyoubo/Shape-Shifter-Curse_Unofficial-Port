@@ -96,8 +96,8 @@ public class DetailScreen extends Screen implements WidgetEXUtils.IWidgetEX {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
-            this.close();
+        } else if (this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
+            this.onClose();
             return true;
         }
         return false;

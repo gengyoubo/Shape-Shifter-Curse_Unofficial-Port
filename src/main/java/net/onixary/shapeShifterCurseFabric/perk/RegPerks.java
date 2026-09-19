@@ -79,7 +79,7 @@ public class RegPerks {
                             PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
                             component.sync();
                         }
-                        player.sendMessage(Component.literal("Perks reset!"), false);
+                        player.displayClientMessage(Component.literal("Perks reset!"), false);
                     }))
                     .canGain((player, form) -> {
                         List<ResourceLocation> perks = PerkUtils.getPlayerPerks(player, PerkUtils.getPlayerNowPerkTreeID(player));
@@ -101,7 +101,7 @@ public class RegPerks {
                             PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
                             component.sync();
                         }
-                        player.sendMessage(Component.literal("Perks reset!"), false);
+                        player.displayClientMessage(Component.literal("Perks reset!"), false);
                     }))
                     .canGain((player, form) -> {
                         List<ResourceLocation> perks = PerkUtils.getPlayerPerks(player, PerkUtils.getPlayerNowPerkTreeID(player));

@@ -1,36 +1,36 @@
 package net.onixary.shapeShifterCurseFabric.perk;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 public interface IPerkClient {
-    public Identifier getID();
+    public ResourceLocation getID();
 
-    public default Identifier getIcon() {
-        Identifier id = this.getID();
+    public default ResourceLocation getIcon() {
+        ResourceLocation id = this.getID();
         String NameSpace = id.getNamespace();
         String Path = id.getPath();
-        return new Identifier(NameSpace, "textures/perks/" + Path + ".png");
+        return ResourceLocation.fromNamespaceAndPath(NameSpace, "textures/perks/" + Path + ".png");
     }
 
-    public default Text getName() {
+    public default Component getName() {
         return IPerkClient.getDefaultName(this.getID());
     }
 
-    public default Text getDesc() {
+    public default Component getDesc() {
         return IPerkClient.getDefaultDesc(this.getID());
     }
 
-    public static @NotNull Text getDefaultName(@NotNull Identifier perkName) {
+    public static @NotNull Component getDefaultName(@NotNull ResourceLocation perkName) {
         String NameSpace = perkName.getNamespace();
         String Path = perkName.getPath();
-        return Text.translatable("ssc_perk." + NameSpace + "." + Path + ".name");
+        return Component.translatable("ssc_perk." + NameSpace + "." + Path + ".name");
     }
 
-    public static @NotNull Text getDefaultDesc(@NotNull Identifier perkName) {
+    public static @NotNull Component getDefaultDesc(@NotNull ResourceLocation perkName) {
         String NameSpace = perkName.getNamespace();
         String Path = perkName.getPath();
-        return Text.translatable("ssc_perk." + NameSpace + "." + Path + ".desc");
+        return Component.translatable("ssc_perk." + NameSpace + "." + Path + ".desc");
     }
 }

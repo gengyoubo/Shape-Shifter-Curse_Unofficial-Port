@@ -23,10 +23,7 @@ import net.onixary.shapeShifterCurseFabric.util.PatronUtils;
 import net.onixary.shapeShifterCurseFabric.util.Verify.KeySegment;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static net.onixary.shapeShifterCurseFabric.networking.ModPackets.UPDATE_POWER_ANIM_DATA_TO_CLIENT;
 
@@ -48,8 +45,8 @@ public class ModPacketsS2CServer {
     }
 
     /* 重构后不需要了 仅用于参考旧实现逻辑
-    public static void sendSyncEffectAttachment(ServerPlayerEntity player, PlayerEffectAttachment attachment) {
-        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+    public static void sendSyncEffectAttachment(ServerPlayer player, PlayerEffectAttachment attachment) {
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         buf.writeNbt(attachment.toNbt());
         //ShapeShifterCurseFabric.LOGGER.info("Attachment sent, nbt: " + attachment.toNbt());
         ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.SYNC_EFFECT_ATTACHMENT),  buf));
@@ -359,8 +356,8 @@ public class ModPacketsS2CServer {
         BytePayload.registerS2C(ModPackets.LOGIN_PACKET);
         BytePayload.registerS2C(ModPackets.ACTIVE_VIRTUAL_TOTEM);
         BytePayload.registerS2C(ModPackets.UPDATE_POWER_ANIM_DATA_TO_CLIENT);
-        BytePayload.registerS2C(ModPackets.UPDATE_PATRON_LEVEL);
-        BytePayload.registerS2C(ModPackets.OPEN_PATRON_FORM_SELECT_MENU);
+        BytePayload.registerS2C(ModPackets.OLD_UPDATE_PATRON_LEVEL);
+        BytePayload.registerS2C(ModPackets.OLD_OPEN_PATRON_FORM_SELECT_MENU);
         BytePayload.registerS2C(ModPackets.OPEN_FORM_SELECT_MENU);
         BytePayload.registerS2C(ModPackets.SET_NO_JUMP_TICK);
         BytePayload.registerS2C(ModPackets.SET_NO_MOVE_TICK);
@@ -371,49 +368,49 @@ public class ModPacketsS2CServer {
         BytePayload.registerS2C(ModPackets.SET_SUPER_USER_LEVEL);
     }
 
-    public static void sendPerkAvailability(ServerPlayerEntity player, boolean fullUpdate, HashMap<Identifier, Boolean> perkAvailability) {
-        PacketByteBuf buf = PacketByteBufs.create();
+    public static void sendPerkAvailability(ServerPlayer player, boolean fullUpdate, HashMap<ResourceLocation, Boolean> perkAvailability) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
         buf.writeBoolean(fullUpdate);
         buf.writeInt(perkAvailability.size());
-        for (Map.Entry<Identifier, Boolean> entry : perkAvailability.entrySet()) {
-            buf.writeIdentifier(entry.getKey());
+        for (Map.Entry<ResourceLocation, Boolean> entry : perkAvailability.entrySet()) {
+            buf.writeResourceLocation(entry.getKey());
             buf.writeBoolean(entry.getValue());
         }
-        ServerPlayNetworking.send(player, ModPackets.SYNC_PERK_AVAILABILITY, buf);
+        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.SYNC_PERK_AVAILABILITY), buf));
     }
 
-    public static void sendPerkAvailabilityFull(ServerPlayerEntity player) {
+    public static void sendPerkAvailabilityFull(ServerPlayer player) {
         sendPerkAvailability(player, true, PerkUtils.getPlayerPerkAvailability(player));
     }
 
-    public static void sendPerkData(ServerPlayerEntity player, boolean fullUpdate, IPerk... perks) {
-        PacketByteBuf buf = PacketByteBufs.create();
+    public static void sendPerkData(ServerPlayer player, boolean fullUpdate, IPerk... perks) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
         buf.writeBoolean(fullUpdate);
         buf.writeInt(perks.length);
         for (IPerk perk : perks) {
-            buf.writeIdentifier(perk.getID());
+            buf.writeResourceLocation(perk.getID());
             buf.writeInt(perk.getXpCost());
         }
-        ServerPlayNetworking.send(player, ModPackets.SYNC_PERK_DATA, buf);
+        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.SYNC_PERK_DATA), buf));
     }
 
-    public static void sendPerkDataFull(ServerPlayerEntity player) {
+    public static void sendPerkDataFull(ServerPlayer player) {
         PerkTree perkTree = PerkUtils.getPlayerNowPerkTree(player);
         if (perkTree == null) {
             return;
         }
-        List<Identifier> perks = perkTree.getAllPerks();
+        List<ResourceLocation> perks = perkTree.getAllPerks();
         sendPerkData(player, true, perks.stream().map(RegPerks::getPerk).filter(Objects::nonNull).toArray(IPerk[]::new));
     }
 
-    public static void sendOpenFormUpgradeMenu(ServerPlayerEntity player, int tier) {
-        PacketByteBuf buf = PacketByteBufs.create();
+    public static void sendOpenFormUpgradeMenu(ServerPlayer player, int tier) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
         buf.writeInt(tier);
-        ServerPlayNetworking.send(player, ModPackets.OPEN_FORM_UPGRADE_MENU, buf);
+        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.OPEN_FORM_UPGRADE_MENU), buf));
     }
 
-    public static void sendOpenSelectSubFormMenu(ServerPlayerEntity player) {
-        PacketByteBuf buf = PacketByteBufs.create();
-        ServerPlayNetworking.send(player, ModPackets.OPEN_SELECT_SUB_FORM_MENU, buf);
+    public static void sendOpenSelectSubFormMenu(ServerPlayer player) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        ServerPlayNetworking.send(player, new BytePayload(BytePayload.id(ModPackets.OPEN_SELECT_SUB_FORM_MENU), buf));
     }
 }

@@ -1,12 +1,10 @@
 package net.onixary.shapeShifterCurseFabric.custom_ui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric;
 import net.onixary.shapeShifterCurseFabric.data.CodexData;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2C;
@@ -23,21 +21,21 @@ import static net.onixary.shapeShifterCurseFabric.ShapeShifterCurseFabric.MOD_ID
 public class SubFormSelectScreen extends Screen {
     private static final int BG_WIDTH = 470;
     private static final int BG_HEIGHT = 247;
-    private static final Identifier BG_TEXTURE = new Identifier(MOD_ID, "textures/gui/normal_form_select_menu.png");
+    private static final ResourceLocation BG_TEXTURE = ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/normal_form_select_menu.png");
 
-    private List<Identifier> availableForms;
+    private List<ResourceLocation> availableForms;
     private int nowPage = 0;
     private static final int pageSize = 16;
-    private final List<Identifier> buttonForms = new ArrayList<>();
-    private final List<ButtonWidget> buttonWidgetList = new ArrayList<>();
+    private final List<ResourceLocation> buttonForms = new ArrayList<>();
+    private final List<Button> buttonWidgetList = new ArrayList<>();
 
-    public SubFormSelectScreen(Text title) {
+    public SubFormSelectScreen(Component title) {
         super(title);
     }
 
-    private List<Identifier> getAvailableForms() {
-        List<Identifier> availableForms = new ArrayList<>();
-        IForm playerForm = FormUtils.getPlayerForm(this.client.player);
+    private List<ResourceLocation> getAvailableForms() {
+        List<ResourceLocation> availableForms = new ArrayList<>();
+        IForm playerForm = FormUtils.getPlayerForm(this.minecraft.player);
         IForm nowForm = playerForm;
         if (playerForm instanceof ISubForm subForm && subForm.isSubForm()) {
             playerForm = subForm.getMasterForm();
@@ -48,12 +46,12 @@ public class SubFormSelectScreen extends Screen {
         List<IForm> subForms = RegPlayerForms.getSubForms(playerForm);
         subForms.add(playerForm);
         subForms.removeIf(form -> form.isEquals(nowForm));
-        subForms.removeIf(form -> !(FormUtils.isFormCanUse(this.client.player, form)));
+        subForms.removeIf(form -> !(FormUtils.isFormCanUse(this.minecraft.player, form)));
         availableForms.addAll(subForms.stream().map(IForm::getFormID).toList());
         return availableForms;
     }
 
-    private void SendSetForm(Identifier formID) {
+    private void SendSetForm(ResourceLocation formID) {
         ModPacketsS2C.sendSetSubForm(formID);
     }
 
@@ -76,12 +74,12 @@ public class SubFormSelectScreen extends Screen {
             return;
         }
         for (int i = 0; i < buttonForms.size(); i++) {
-            ButtonWidget buttonWidget = buttonWidgetList.get(i);
+            Button buttonWidget = buttonWidgetList.get(i);
             if (buttonForms.get(i) != null) {
                 try {
                     buttonWidget.setMessage(RegPlayerForms.getPlayerForm(buttonForms.get(i)).getContentText(CodexData.ContentType.NAME));
                 } catch (Exception e) {
-                    buttonWidget.setMessage(Text.of(buttonForms.get(i).toString()));
+                    buttonWidget.setMessage(Component.nullToEmpty(buttonForms.get(i).toString()));
                 }
                 buttonWidget.visible = true;
             }
@@ -108,25 +106,25 @@ public class SubFormSelectScreen extends Screen {
             for (int Row = 0; Row < 8; Row++) {
                 int ButtonX = ButtonStartX + Col * (ButtonWidth + 20);
                 int ButtonY = ButtonStartY + Row * (ButtonHeight + 5);
-                ButtonWidget button = ButtonWidget.builder(Text.of("<-------->"), (buttonWidget) -> {
+                Button button = Button.builder(Component.nullToEmpty("<-------->"), (buttonWidget) -> {
                     int ID = buttonWidgetList.indexOf(buttonWidget);
                     if (ID >= 0 && ID < buttonForms.size()) {
                         if (buttonForms.get(ID) != null) {
                             SendSetForm(buttonForms.get(ID));
                         }
                     }
-                    this.close();
-                }).size(ButtonWidth, ButtonHeight).position(ButtonX, ButtonY).build();
+                    this.onClose();
+                }).size(ButtonWidth, ButtonHeight).pos(ButtonX, ButtonY).build();
                 button.visible = false;
                 buttonWidgetList.add(button);
-                addDrawableChild(button);
+                addRenderableWidget(button);
             }
         }
         // 翻页
-        ButtonWidget PagePrevButton = ButtonWidget.builder(Text.of("<"), (buttonWidget) -> PrevPage()).size(20, 20).position(width / 2 - 100, height / 2 + 4 * (ButtonHeight + 5) - 5).build();
-        this.addDrawableChild(PagePrevButton);
-        ButtonWidget PageNextButton = ButtonWidget.builder(Text.of(">"), (buttonWidget) -> NextPage()).size(20, 20).position(width / 2 + 80, height / 2 + 4 * (ButtonHeight + 5) - 5).build();
-        this.addDrawableChild(PageNextButton);
+        Button PagePrevButton = Button.builder(Component.nullToEmpty("<"), (buttonWidget) -> PrevPage()).size(20, 20).pos(width / 2 - 100, height / 2 + 4 * (ButtonHeight + 5) - 5).build();
+        this.addRenderableWidget(PagePrevButton);
+        Button PageNextButton = Button.builder(Component.nullToEmpty(">"), (buttonWidget) -> NextPage()).size(20, 20).pos(width / 2 + 80, height / 2 + 4 * (ButtonHeight + 5) - 5).build();
+        this.addRenderableWidget(PageNextButton);
         LoadPage();
         super.init();
     }
@@ -152,27 +150,27 @@ public class SubFormSelectScreen extends Screen {
     }
 
     @Override
-    public void close() {
-        super.close();
+    public void onClose() {
+        super.onClose();
     }
 
-    public void renderBackgroundTexture(DrawContext context) {
+    public void renderBackgroundTexture(GuiGraphics context) {
         // 计算居中位置，保持固定尺寸
         int bgX = (this.width - BG_WIDTH) / 2;
         int bgY = (this.height - BG_HEIGHT) / 2;
-        context.drawTexture(BG_TEXTURE, bgX, bgY, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
+        context.blit(BG_TEXTURE, bgX, bgY, 0, 0, BG_WIDTH, BG_HEIGHT, BG_WIDTH, BG_HEIGHT);
     }
 
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         this.renderBackgroundTexture(context);
         //this.renderTexture(context);
         super.render(context, mouseX, mouseY, delta);
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 
@@ -180,8 +178,8 @@ public class SubFormSelectScreen extends Screen {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (this.client.options.inventoryKey.matchesKey(keyCode, scanCode)) {
-            this.close();
+        } else if (this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
+            this.onClose();
             return true;
         }
         return false;

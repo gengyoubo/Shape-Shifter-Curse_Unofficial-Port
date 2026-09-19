@@ -4,6 +4,10 @@ import com.google.common.base.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.onixary.shapeShifterCurseFabric.blocks.FormAttunerBlock;
+import net.onixary.shapeShifterCurseFabric.blocks.block_entity.FormAttunerBlockEntity;
+import net.onixary.shapeShifterCurseFabric.cursed_moon.CursedMoon;
 import net.onixary.shapeShifterCurseFabric.networking.ModPacketsS2C;
 import net.onixary.shapeShifterCurseFabric.player_form.utils.PlayerFormComponent;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +40,8 @@ public class PerkUtils {
         return perkDataList;
     }
 
-    public static void removeInValidPerk(PlayerEntity player, ResourceLocation perkTreeID) {
-        if (!(player instanceof ServerPlayerEntity playerEntity)) return;
+    public static void removeInValidPerk(Player player, ResourceLocation perkTreeID) {
+        if (!(player instanceof ServerPlayer playerEntity)) return;
         PlayerFormComponent component = PlayerFormComponent.COMPONENT.get(player);
         PerkTree perkTree = RegPerks.getPerkTree(perkTreeID);
         if (perkTree == null) {
@@ -99,7 +103,7 @@ public class PerkUtils {
         if (perkTree == null) return;
         if (!perkTree.getAllPerks().contains(perkID)) return;
 
-        int xpCost = player.getAbilities().creativeMode ? 0 : perkData.getXpCost();
+        int xpCost = player.getAbilities().instabuild ? 0 : perkData.getXpCost();
         if (player.totalExperience < xpCost) {
             return;
         }
@@ -124,7 +128,7 @@ public class PerkUtils {
         }
 
         if (perkData.canGain(player, component.nowForm)) {
-            player.addExperience(-xpCost);
+            player.giveExperiencePoints(-xpCost);
             __addPerk(player, perkTreeID, perkID);
         }
         removeInValidPerk(player, perkTreeID);
@@ -132,8 +136,8 @@ public class PerkUtils {
 
     public static boolean isCanGainPerk(Player player) {
         // 仅检测从客户端提交的加点请求 服务器端的加点请求直接过 所以这里只能加环境检测
-        World world = player.getWorld();
-        if (world.getRegistryKey() != World.OVERWORLD) {
+        Level world = player.level();
+        if (world.dimension() != Level.OVERWORLD) {
             return false;
         }
         if (!CursedMoon.isInCursedMoon(world)) {
@@ -172,7 +176,7 @@ public class PerkUtils {
         component.sync();
     }
 
-    public static HashMap<ResourceLocation, Boolean> getPlayerPerkAvailability(PlayerEntity player) {
+    public static HashMap<ResourceLocation, Boolean> getPlayerPerkAvailability(Player player) {
         PerkTree perkTree = getPlayerNowPerkTree(player);
         if (perkTree == null) return new HashMap<>();
         HashMap<ResourceLocation, Boolean> perkAvailability = new HashMap<>();

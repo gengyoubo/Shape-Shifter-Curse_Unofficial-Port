@@ -2,20 +2,20 @@ package net.onixary.shapeShifterCurseFabric.blocks.block_entity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.Stainable;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.screen.PropertyDelegate;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.FastColor;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BeaconBeamBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.onixary.shapeShifterCurseFabric.blocks.RegCustomBlock;
 import net.onixary.shapeShifterCurseFabric.cursed_moon.CursedMoon;
 
@@ -37,7 +37,7 @@ public class FormAttunerBlockEntity extends BlockEntity {
         super(RegCustomBlock.FORM_ATTUNER_BLOCK_ENTITY, blockPos, blockState);
     }
 
-    public static void tick(World world, BlockPos pos, BlockState state, FormAttunerBlockEntity blockEntity) {
+    public static void tick(Level world, BlockPos pos, BlockState state, FormAttunerBlockEntity blockEntity) {
         int i = pos.getX();
         int j = pos.getY();
         int k = pos.getZ();
@@ -50,12 +50,19 @@ public class FormAttunerBlockEntity extends BlockEntity {
             blockPos = new BlockPos(i, blockEntity.minY + 1, k);
         }
         BeamSegment beamSegment = blockEntity.beams.isEmpty() ? null : (BeamSegment)blockEntity.beams.get(blockEntity.beams.size() - 1);
-        int l = world.getTopY(Heightmap.Type.WORLD_SURFACE, i, k);
+        int l = world.getHeight(Heightmap.Types.WORLD_SURFACE, i, k);
         for(int m = 0; m < 10 && blockPos.getY() <= l; ++m) {
             BlockState blockState = world.getBlockState(blockPos);
             Block block = blockState.getBlock();
-            if (block instanceof Stainable) {
-                float[] fs = ((Stainable)block).getColor().getColorComponents();
+            if (block instanceof BeaconBeamBlock) {
+                // 1.21.1 Mojmap：DyeColor 的颜色分量取法由 Yarn 的 getColorComponents()（float[]）
+                // 改为 getTextureDiffuseColor()（ARGB int），这里拆成 0..1 的分量给 BeamSegment。
+                int argb = ((BeaconBeamBlock)block).getColor().getTextureDiffuseColor();
+                float[] fs = new float[]{
+                    FastColor.ARGB32.red(argb) / 255.0F,
+                    FastColor.ARGB32.green(argb) / 255.0F,
+                    FastColor.ARGB32.blue(argb) / 255.0F
+                };
                 if (blockEntity.beams.size() <= 1) {
                     beamSegment = new BeamSegment(fs);
                     blockEntity.beams.add(beamSegment);
@@ -68,7 +75,7 @@ public class FormAttunerBlockEntity extends BlockEntity {
                     }
                 }
             } else {
-                if (beamSegment == null || blockState.getOpacity(world, blockPos) >= 15 && !blockState.isOf(Blocks.BEDROCK)) {
+                if (beamSegment == null || blockState.getLightBlock(world, blockPos) >= 15 && !blockState.is(Blocks.BEDROCK)) {
                     blockEntity.beams.clear();
                     blockEntity.minY = l;
                     break;
@@ -77,38 +84,38 @@ public class FormAttunerBlockEntity extends BlockEntity {
                 beamSegment.increaseHeight();
             }
 
-            blockPos = blockPos.up();
+            blockPos = blockPos.above();
             ++blockEntity.minY;
         }
 
         int m = blockEntity.level;
-        if (world.getTime() % 80L == 0L) {
+        if (world.getGameTime() % 80L == 0L) {
             if (!blockEntity.beamSegments.isEmpty()) {
                 blockEntity.level = updateLevel(world, i, j, k);
             }
             if (blockEntity.level > 0 && !blockEntity.beamSegments.isEmpty()) {
                 // 这里可以写加 Buff
-                playSound(world, pos, SoundEvents.BLOCK_BEACON_AMBIENT);
+                playSound(world, pos, SoundEvents.BEACON_AMBIENT);
             }
         }
         if (blockEntity.minY >= l) {
-            blockEntity.minY = world.getBottomY() - 1;
+            blockEntity.minY = world.getMinBuildHeight() - 1;
             boolean bl = m > 0;
             blockEntity.beamSegments = blockEntity.beams;
-            if (!world.isClient) {
+            if (!world.isClientSide) {
                 boolean bl2 = blockEntity.level > 0;
                 if (!bl && bl2) {
-                    playSound(world, pos, SoundEvents.BLOCK_BEACON_ACTIVATE);
+                    playSound(world, pos, SoundEvents.BEACON_ACTIVATE);
                 } else if (bl && !bl2) {
-                    playSound(world, pos, SoundEvents.BLOCK_BEACON_DEACTIVATE);
+                    playSound(world, pos, SoundEvents.BEACON_DEACTIVATE);
                 }
             }
         }
     }
 
-    private static int updateLevel(World world, int x, int y, int z) {
+    private static int updateLevel(Level world, int x, int y, int z) {
         // 设定上需要诅咒之月的力量 So 仅主世界可用
-        if (world.getRegistryKey() != World.OVERWORLD) {
+        if (world.dimension() != Level.OVERWORLD) {
             return 0;
         }
         if (!CursedMoon.isInCursedMoon(world)) {
@@ -117,13 +124,13 @@ public class FormAttunerBlockEntity extends BlockEntity {
         int i = 0;
         for(int j = 1; j <= MAX_LEVEL; i = j++) {
             int k = y - j;
-            if (k < world.getBottomY()) {
+            if (k < world.getMinBuildHeight()) {
                 break;
             }
             boolean bl = true;
             for(int l = x - j; l <= x + j && bl; ++l) {
                 for(int m = z - j; m <= z + j; ++m) {
-                    if (!world.getBlockState(new BlockPos(l, k, m)).isIn(BlockTags.BEACON_BASE_BLOCKS)) {
+                    if (!world.getBlockState(new BlockPos(l, k, m)).is(BlockTags.BEACON_BASE_BLOCKS)) {
                         bl = false;
                         break;
                     }
@@ -140,20 +147,21 @@ public class FormAttunerBlockEntity extends BlockEntity {
         return this.level == 0 ? ImmutableList.of() : this.beamSegments;
     }
     
-    public static void playSound(World world, BlockPos pos, SoundEvent sound) {
-        world.playSound((PlayerEntity)null, pos, sound, SoundCategory.BLOCKS, 1.0F, 1.0F);
+    public static void playSound(Level world, BlockPos pos, SoundEvent sound) {
+        world.playSound((Player)null, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
     }
     
     @Override
-    public void markRemoved() {
-        playSound(this.world, this.pos, SoundEvents.BLOCK_BEACON_DEACTIVATE);
-        super.markRemoved();
+    public void setRemoved() {
+        // 注意：本类自己有个 `int level` 字段，遮蔽了 BlockEntity.level，所以用 getLevel() 取所在维度
+        playSound(this.getLevel(), this.worldPosition, SoundEvents.BEACON_DEACTIVATE);
+        super.setRemoved();
     }
 
     @Override
-    public void setWorld(World world) {
-        super.setWorld(world);
-        this.minY = world.getBottomY() - 1;
+    public void setLevel(Level world) {
+        super.setLevel(world);
+        this.minY = world.getMinBuildHeight() - 1;
     }
 
     public static class BeamSegment {

@@ -339,5 +339,8 @@ public class ModPacketsC2S {
         BytePayload.registerC2S(REQUEST_POWER_ANIM_DATA);
         BytePayload.registerC2S(ModPackets.UPLOAD_PATRON_AUTH_FILE);
         BytePayload.registerC2S(ModPackets.ADD_PERK);
+        BytePayload.registerC2S(REQUEST_PERK_AVAILABILITY);
+        BytePayload.registerC2S(REQUEST_PERK_DATA);
+        BytePayload.registerC2S(REQUEST_SET_SUB_FORM);
     }
 }

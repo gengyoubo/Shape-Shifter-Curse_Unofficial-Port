@@ -7,7 +7,12 @@ import net.onixary.shapeShifterCurseFabric.player_animation.v3.AbstractAnimState
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AbstractAnimStateControllerDP;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AnimSystem;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AnimUtils;
+import net.onixary.shapeShifterCurseFabric.player_animation.v3.*;
+import net.onixary.shapeShifterCurseFabric.util.util.DataDumper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class OneAnimController extends AbstractAnimStateControllerDP {
     private AnimUtils.AnimationHolderData animationHolderData;
@@ -37,5 +42,10 @@ public class OneAnimController extends AbstractAnimStateControllerDP {
     public AbstractAnimStateController loadFormJson(JsonObject jsonObject) {
         this.animationHolderData = AnimUtils.readAnimInJson(jsonObject, "anim", null);
         return this;
+    }
+
+    @Override
+    public @NotNull List<AnimationHolder> getAllAnimations() {
+        return DataDumper.buildList(animationHolder);
     }
 }

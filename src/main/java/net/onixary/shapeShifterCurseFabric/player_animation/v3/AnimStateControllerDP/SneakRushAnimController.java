@@ -7,7 +7,12 @@ import net.onixary.shapeShifterCurseFabric.player_animation.v3.AbstractAnimState
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AbstractAnimStateControllerDP;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AnimSystem;
 import net.onixary.shapeShifterCurseFabric.player_animation.v3.AnimUtils;
+import net.onixary.shapeShifterCurseFabric.player_animation.v3.*;
+import net.onixary.shapeShifterCurseFabric.util.util.DataDumper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class SneakRushAnimController extends AbstractAnimStateControllerDP {
 
@@ -56,5 +61,10 @@ public class SneakRushAnimController extends AbstractAnimStateControllerDP {
         this.sneakAnimationHolderData = AnimUtils.readAnimInJson(jsonObject, "sneakAnim", null);
         this.sneakRushAnimationHolderData = AnimUtils.readAnimInJson(jsonObject, "sneakRushAnim", null);
 	    return null;
+    }
+
+    @Override
+    public @NotNull List<AnimationHolder> getAllAnimations() {
+        return DataDumper.buildList(animationHolder, sneakAnimationHolder, sneakRushAnimationHolder);
     }
 }
